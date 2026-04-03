@@ -20,8 +20,9 @@ class AuthService {
       final GoogleSignInAuthentication auth = await account.authentication;
       final String? idToken = auth.idToken;
 
-      if (idToken == null)
+      if (idToken == null) {
         throw Exception('Failed to obtain ID Token from Google');
+      }
 
       print('🚀 Authenticating with Google at: $_baseUrl/api/auth/google');
       final response = await http.post(

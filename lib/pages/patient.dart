@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gram_setu/pages/video_call_page.dart';
 
 import '../core/app_colors.dart';
 import 'package:provider/provider.dart';
@@ -122,6 +123,21 @@ class _PatientDashboardState extends State<PatientDashboard> {
               onTap: () => Navigator.pushNamed(context, '/consultation'),
             ),
             ActionCard(
+              title: 'Join Video Call',
+              subtitle: 'Start secure session',
+              icon: Icons.videocam_outlined,
+              isDark: true,
+              accentColor: AppColors.softBlue,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const VideoCallPage(roomName: 'doctor_consultation_room'),
+                  ),
+                );
+              },
+            ),
+            ActionCard(
               title: 'View Prescriptions',
               subtitle: 'Check your medicines',
               icon: Icons.description_outlined,
@@ -213,10 +229,12 @@ class _PatientDashboardState extends State<PatientDashboard> {
     return GestureDetector(
       onTap: () {
         setState(() => _currentIndex = index);
-        if (index == 1) Navigator.pushNamed(context, '/profile', arguments: {
+        if (index == 1) {
+          Navigator.pushNamed(context, '/profile', arguments: {
           'role': 'patient',
           'user': ModalRoute.of(context)?.settings.arguments,
         });
+        }
         if (index == 2) Navigator.pushNamed(context, '/settings');
       },
       behavior: HitTestBehavior.opaque,

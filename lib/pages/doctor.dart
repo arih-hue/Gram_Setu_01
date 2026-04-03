@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gram_setu/pages/video_call_page.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../core/app_colors.dart';
 import 'package:provider/provider.dart';
@@ -103,7 +104,14 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                     icon: Icons.videocam_outlined,
                     isDark: true,
                     accentColor: AppColors.doctorGreen,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const VideoCallPage(roomName: 'doctor_consultation_room'),
+                        ),
+                      );
+                    },
                   ),
                   ActionCard(
                     title: 'Patient Records',

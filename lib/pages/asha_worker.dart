@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gram_setu/pages/video_call_page.dart';
 import '../core/app_colors.dart';
 import '../widgets/gram_app_bar.dart';
 import '../widgets/stat_card.dart';
@@ -92,6 +93,21 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
                 isDark: true,
                 accentColor: AppColors.softBlue,
                 onTap: () => Navigator.pushNamed(context, '/asha_consultation'),
+              ),
+              ActionCard(
+                title: 'Doctor Video Call',
+                subtitle: 'Connect patient to specialist',
+                icon: Icons.videocam_outlined,
+                isDark: true,
+                accentColor: AppColors.ashaWorkerPink,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const VideoCallPage(roomName: 'doctor_consultation_room'),
+                    ),
+                  );
+                },
               ),
               ActionCard(
                 title: 'Record Vitals',
