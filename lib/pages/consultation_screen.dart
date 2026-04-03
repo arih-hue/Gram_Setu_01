@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
+import '../core/user_provider.dart';
 import '../widgets/gram_app_bar.dart';
+import '../services/api_service.dart';
 
 class ConsultationScreen extends StatefulWidget {
   const ConsultationScreen({super.key});
@@ -11,13 +14,61 @@ class ConsultationScreen extends StatefulWidget {
 
 class _ConsultationScreenState extends State<ConsultationScreen> {
   final _symptomsController = TextEditingController();
-  final String _selectedUrgency = 'Normal';
   bool _submitted = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _symptomsController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitRequest() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = userProvider.user;
+    
+    if (user == null) {
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User not logged in')));
+       return;
+    }
+
+    final String reason = _symptomsController.text.trim();
+
+    if (reason.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please describe the symptoms')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await ApiService.post('/consultation/create', {
+        'patientName': user['name'],
+        'patientUID': user['uid'],
+        'patientAge': user['age'] ?? 25,
+        'patientGender': user['gender'] ?? 'Not specified',
+        'reason': reason,
+        'bookedBy': 'patient',
+      });
+
+      if (response.statusCode == 201) {
+        setState(() {
+          _submitted = true;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to submit: ${response.body}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+
   }
 
   @override
@@ -33,6 +84,8 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
   }
 
   Widget _buildFormView() {
+    final user = Provider.of<UserProvider>(context).user;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -41,33 +94,41 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
         Text('Describe your symptoms and we will match you with an available doctor.', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
         const SizedBox(height: 24),
 
-        // Patient info
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: AppColors.adaptiveSurface(context), borderRadius: BorderRadius.circular(12)),
-          child: Row(
-            children: [
-              Icon(Icons.person_outline, color: AppColors.primaryTeal),
-              SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Demo User', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
-                  Text('UID: UID00VFYV3X3 • Village: Rampur', style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
-                ],
-              ),
-            ],
+        // Patient info Card
+        if (user != null)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: AppColors.adaptiveSurface(context), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.adaptiveBorder(context))),
+            child: Row(
+              children: [
+                Icon(Icons.person_outline, color: AppColors.primaryTeal),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(user['name'] ?? 'User', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+                    Text('UID: ${user['uid'] ?? 'N/A'} • Age: ${user['age'] ?? 'N/A'}', style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+        
         const SizedBox(height: 20),
 
         // Symptoms
-        Text('Describe Symptoms', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+        Text('Describe Symptoms / Problem', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
         const SizedBox(height: 8),
         TextField(
           controller: _symptomsController,
           maxLines: 4,
-          decoration: const InputDecoration(hintText: 'E.g., Fever for 3 days, headache, body pain...'),
+          style: TextStyle(color: AppColors.adaptiveTextPrimary(context)),
+          decoration: InputDecoration(
+            hintText: 'E.g., Fever for 3 days, headache, body pain...',
+            filled: true,
+            fillColor: AppColors.adaptiveSurface(context),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.adaptiveBorder(context))),
+          ),
         ),
         const SizedBox(height: 20),
 
@@ -96,8 +157,11 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
           width: double.infinity,
           height: 54,
           child: ElevatedButton(
-            onPressed: () => setState(() => _submitted = true),
-            child: const Text('Submit Consultation Request'),
+            onPressed: _isLoading ? null : _submitRequest,
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryTeal, foregroundColor: Colors.white),
+            child: _isLoading 
+              ? const CircularProgressIndicator(color: Colors.white)
+              : const Text('Submit Consultation Request', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ),
       ],
@@ -128,8 +192,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
           ),
           child: Column(
             children: [
-              _infoRow('Submitted', 'Just now'),
-              _infoRow('Urgency', _selectedUrgency),
+              _infoRow('Patient', Provider.of<UserProvider>(context).user?['name'] ?? 'N/A'),
               _infoRow('Status', 'Matching doctor...'),
               _infoRow('Est. Wait', '~15 minutes'),
             ],
@@ -137,16 +200,13 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
         ),
 
         const SizedBox(height: 24),
-
-        // Recent consultations
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text('Past Consultations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
-        ),
-        const SizedBox(height: 12),
-        _buildPastConsultation('Dr. Sharma', 'Fever, headache', 'Mar 5, 2026', 'Completed'),
-        _buildPastConsultation('Dr. Gupta', 'Follow-up visit', 'Feb 20, 2026', 'Completed'),
-        _buildPastConsultation('Dr. Patel', 'Skin rash', 'Feb 10, 2026', 'Completed'),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Go Back'),
+          ),
+        )
       ],
     );
   }
@@ -159,45 +219,6 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
         children: [
           Text(label, style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
           Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPastConsultation(String doctor, String issue, String date, String status) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.adaptiveSurface(context), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.adaptiveBorder(context))),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.doctorGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.medical_services, color: AppColors.doctorGreen, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(doctor, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
-                Text(issue, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(date, style: TextStyle(fontSize: 11, color: AppColors.adaptiveTextHint(context))),
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Text(status, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.success)),
-              ),
-            ],
-          ),
         ],
       ),
     );

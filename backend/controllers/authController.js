@@ -100,6 +100,7 @@ exports.register = async (req, res) => {
     
     // Remove password from response for security
     const userResponse = user.toObject();
+    userResponse.id = user._id.toString(); 
     delete userResponse.password;
 
     res.status(201).json({ success: true, token, user: userResponse });
@@ -139,10 +140,10 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
-
     const token = generateToken(user);
     
     const userResponse = user.toObject();
+    userResponse.id = user._id.toString(); // Explicitly add string ID
     delete userResponse.password;
 
     res.status(200).json({ success: true, token, user: userResponse });

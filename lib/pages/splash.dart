@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../core/app_colors.dart';
+import '../core/constants.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -48,7 +49,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               padding: const EdgeInsets.all(20),
               child: Image.asset(
-                'assets/images/logo.png',
+                AppConstants.kLogoPath,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => 
                     const Icon(Icons.health_and_safety, color: AppColors.primaryTeal, size: 60),

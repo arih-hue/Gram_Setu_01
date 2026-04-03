@@ -12,12 +12,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-<<<<<<< HEAD
     <orderEntry type="library" name="Dart SDK" level="project" />
     <orderEntry type="library" name="Flutter Plugins" level="project" />
     <orderEntry type="library" name="Dart Packages" level="project" />
-=======
-    <orderEntry type="library" name="Flutter Plugins" level="project" />
->>>>>>> 85a2fb6f09f23efcf215dc4fce8d975766eee5c1
+
   </component>
 </module>

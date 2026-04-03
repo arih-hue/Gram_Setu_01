@@ -18,11 +18,13 @@ class LiveKitService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        print('Error fetching LiveKit token: ${response.statusCode} - ${response.body}');
+        // Log error
+
         return null;
       }
     } catch (e) {
-      print('Exception fetching LiveKit token: $e');
+      // Log exception
+
       return null;
     }
   }
@@ -50,7 +52,8 @@ class LiveKitService {
       
       return _room;
     } catch (e) {
-      print('Error connecting to LiveKit room: $e');
+      // Log error
+
       return null;
     }
   }

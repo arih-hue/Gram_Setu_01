@@ -30,6 +30,10 @@ import 'package:gram_setu/pages/add_patient_screen.dart';
 import 'package:gram_setu/pages/asha_consultation_screen.dart';
 import 'package:gram_setu/pages/health_awareness_screen.dart';
 import 'package:gram_setu/pages/edit_profile.dart';
+import 'package:gram_setu/pages/pending_consultations_screen.dart';
+import 'package:gram_setu/pages/panchayat_records_screen.dart';
+import 'package:gram_setu/pages/consultation_requests_screen.dart';
+import 'package:gram_setu/pages/accepted_consultations_screen.dart';
 
 void main() {
   runApp(
@@ -84,6 +88,10 @@ class GramSetuApp extends StatelessWidget {
           '/asha_consultation': (context) => const AshaConsultationScreen(),
           '/health_awareness': (context) => const HealthAwarenessScreen(),
           '/edit_profile': (context) => const EditProfileScreen(),
+          '/pending_consultations': (context) => const PendingConsultationsScreen(),
+          '/panchayat_records': (context) => const PanchayatRecordsScreen(),
+          '/consultation_requests': (context) => const ConsultationRequestsScreen(),
+          '/accepted_consultations': (context) => const AcceptedConsultationsScreen(),
         };
 
         final builder = routes[settings.name];

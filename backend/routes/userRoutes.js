@@ -46,4 +46,18 @@ router.post('/register', async (req, res) => {
     }
 });
 
+// @route   GET /api/users/uid/:uid
+// @desc    Get user details by UID
+router.get('/uid/:uid', async (req, res) => {
+    try {
+        const user = await User.findOne({ uid: req.params.uid });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Patient not found' });
+        }
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 module.exports = router;

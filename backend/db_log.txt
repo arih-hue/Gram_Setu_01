@@ -1,0 +1,11 @@
+Connecting to MongoDB...
+✅ Connected successfully!
+
+--- Database Stats ---
+Database Name: gram_setu
+Collections Count: 2
+Collections:
+ - triagecases: 0 documents
+ - users: 17 documents
+
+Disconnected.

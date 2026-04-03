@@ -6,6 +6,8 @@ import '../widgets/action_card.dart';
 import '../widgets/section_header.dart';
 import 'package:provider/provider.dart';
 import '../core/user_provider.dart';
+import 'asha_consultation_screen.dart';
+import 'view_prescription_search_screen.dart';
 
 class PanchayatDashboard extends StatefulWidget {
   const PanchayatDashboard({super.key});
@@ -85,7 +87,39 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
             const SizedBox(height: 24),
 
             // Quick Actions
-            const SectionHeader(title: 'Quick Actions'),
+            const SectionHeader(title: 'Patient Management'),
+            ActionCard(
+              title: 'Book Consultation',
+              subtitle: 'Search UID and book doctor for patient',
+              icon: Icons.calendar_month_outlined,
+              isDark: true,
+              accentColor: AppColors.panchayatPurple,
+              onTap: () {
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AshaConsultationScreen(bookedBy: 'panchayat'),
+                  ),
+                );
+              },
+            ),
+            ActionCard(
+              title: 'View Prescription',
+              subtitle: 'Search patient UID and view medical records',
+              icon: Icons.description_outlined,
+              isDark: true,
+              accentColor: AppColors.softBlue,
+              onTap: () {
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ViewPrescriptionSearchScreen(themeColor: AppColors.panchayatPurple),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            const SectionHeader(title: 'Admin Actions'),
             ActionCard(
               title: 'Register New Patient',
               subtitle: 'Create health ID for a villager',
@@ -93,14 +127,6 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
               isDark: true,
               accentColor: AppColors.panchayatPurple,
               onTap: () => _showPatientRegistration(context),
-            ),
-            ActionCard(
-              title: 'Request Doctor',
-              subtitle: 'Request a consultation for a patient',
-              icon: Icons.medical_services_outlined,
-              isDark: true,
-              accentColor: AppColors.doctorGreen,
-              onTap: () => Navigator.pushNamed(context, '/consultation'),
             ),
             ActionCard(
               title: 'Emergency Alert',
@@ -111,15 +137,6 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
               onTap: () => Navigator.pushNamed(context, '/emergency'),
             ),
             ActionCard(
-              title: 'Patient Records',
-              subtitle: 'Search & view health records by UID',
-              icon: Icons.folder_shared_outlined,
-              isDark: true,
-              accentColor: AppColors.softBlue,
-              onTap: () {},
-            ),
-
-            ActionCard(
               title: 'Health Campaigns',
               subtitle: 'Schedule awareness programs',
               icon: Icons.campaign_outlined,
@@ -128,14 +145,6 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
               onTap: () {},
             ),
             const SizedBox(height: 24),
-
-            // Recent Activity
-            const SectionHeader(title: 'Recent Activity'),
-            _buildActivityItem(Icons.person_add, 'New patient registered', 'Kamla Devi • UID006723', '10 min ago', AppColors.panchayatPurple),
-            _buildActivityItem(Icons.medical_services, 'Consultation requested', 'For Ramesh (chest pain)', '25 min ago', AppColors.doctorGreen),
-            _buildActivityItem(Icons.warning_amber, 'Emergency alert sent', 'Geeta Devi — high BP', '1 hour ago', AppColors.emergencyRed),
-            _buildActivityItem(Icons.medication, 'Prescription delivered', 'Mohan Lal — antibiotics', '2 hours ago', AppColors.primaryTeal),
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -170,8 +179,7 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
               _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
               _buildNavItem(1, Icons.person_add_outlined, Icons.person_add, 'Register'),
               _buildNavItem(2, Icons.medical_services_outlined, Icons.medical_services, 'Consult'),
-              _buildNavItem(3, Icons.notifications_outlined, Icons.notifications, 'Alerts'),
-              _buildNavItem(4, Icons.person_outline, Icons.person, 'Profile'),
+              _buildNavItem(3, Icons.person_outline, Icons.person, 'Profile'),
             ],
           ),
         ),
@@ -198,56 +206,13 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? AppColors.panchayatPurple : AppColors.adaptiveTextSecondary(context),
-              size: 24,
-            ),
+            Icon(isSelected ? activeIcon : icon, color: isSelected ? AppColors.panchayatPurple : AppColors.adaptiveTextSecondary(context), size: 24),
             if (isSelected) ...[
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.panchayatPurple,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
+              Text(label, style: const TextStyle(color: AppColors.panchayatPurple, fontWeight: FontWeight.w600, fontSize: 13)),
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(IconData icon, String title, String subtitle, String time, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.adaptiveSurface(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.adaptiveBorder(context)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
-                Text(subtitle, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
-              ],
-            ),
-          ),
-          Text(time, style: TextStyle(fontSize: 11, color: AppColors.adaptiveTextSecondary(context))),
-        ],
       ),
     );
   }
@@ -271,7 +236,7 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.all(Radius.circular(2)))),
+              child: Container(width: 40, height: 4, decoration: const BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.all(Radius.circular(2)))),
             ),
             const SizedBox(height: 20),
             Text('Register New Patient', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
@@ -303,7 +268,7 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
                   );
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.panchayatPurple),
-                child: const Text('Register & Generate UID'),
+                child: const Text('Register & Generate UID', style: TextStyle(color: Colors.white)),
               ),
             ),
             const SizedBox(height: 10),
@@ -323,9 +288,9 @@ class _VillageStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(color: AppColors.adaptiveTextSecondary(context), fontSize: 12)),
+        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
       ],
     );
   }

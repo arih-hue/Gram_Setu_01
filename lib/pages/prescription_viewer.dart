@@ -1,190 +1,179 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../core/app_colors.dart';
+import '../services/api_service.dart';
+import '../core/user_provider.dart';
 import '../widgets/gram_app_bar.dart';
 
-class PrescriptionViewer extends StatelessWidget {
+class PrescriptionViewer extends StatefulWidget {
   const PrescriptionViewer({super.key});
+
+  @override
+  State<PrescriptionViewer> createState() => _PrescriptionViewerState();
+}
+
+class _PrescriptionViewerState extends State<PrescriptionViewer> {
+  bool _isLoading = true;
+  List<dynamic> _prescriptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPrescriptions();
+  }
+
+  Future<void> _fetchPrescriptions() async {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final uid = user['uid'];
+      final response = await ApiService.get('/prescription/patient/$uid');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _prescriptions = data['prescriptions'];
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load prescriptions');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.adaptiveBackground(context),
-      appBar: const GramAppBar(roleLabel: 'My Prescriptions', showBack: true, showSos: false),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Prescriptions', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
-            const SizedBox(height: 6),
-            Text('All your doctor-prescribed medicines', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
-            const SizedBox(height: 20),
+      appBar: const GramAppBar(roleLabel: 'My Prescriptions', showBack: true),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: _fetchPrescriptions,
+            child: _prescriptions.isEmpty 
+              ? _buildEmptyState()
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _prescriptions.length,
+                  itemBuilder: (context, index) {
+                    final rx = _prescriptions[index];
+                    return _buildRxCard(rx);
+                  },
+                ),
+          ),
+    );
+  }
 
-            // Active
-            _buildSectionLabel(context, 'Active Prescriptions'),
-            _buildRx(
-              context: context,
-              doctor: 'Dr. Sharma',
-              date: 'Mar 10, 2026',
-              medicines: [
-                {'name': 'Paracetamol 500mg', 'dosage': 'Twice daily after meals', 'duration': '5 days'},
-                {'name': 'Amoxicillin 250mg', 'dosage': 'Thrice daily', 'duration': '7 days'},
-              ],
-              notes: 'Take plenty of fluids,  rest for 3 days. Follow up if fever persists more than a week.',
-              isActive: true,
-              deliveryStatus: 'Ready for pickup at Panchayat',
-            ),
-            _buildRx(
-              context: context,
-              doctor: 'Dr. Gupta',
-              date: 'Mar 8, 2026',
-              medicines: [
-                {'name': 'Metformin 500mg', 'dosage': 'Once daily after breakfast', 'duration': '30 days'},
-                {'name': 'Amlodipine 5mg', 'dosage': 'Once daily morning', 'duration': '30 days'},
-              ],
-              notes: 'Monitor blood sugar weekly. Avoid sweets.',
-              isActive: true,
-              deliveryStatus: 'Delivered ✓',
-            ),
-
-            const SizedBox(height: 20),
-            _buildSectionLabel(context, 'Past Prescriptions'),
-            _buildRx(
-              context: context,
-              doctor: 'Dr. Patel',
-              date: 'Feb 15, 2026',
-              medicines: [
-                {'name': 'Cetirizine 10mg', 'dosage': 'Once at night', 'duration': '5 days'},
-              ],
-              notes: 'Skin allergy. Avoid dust.',
-              isActive: false,
-            ),
-            _buildRx(
-              context: context,
-              doctor: 'Dr. Sharma',
-              date: 'Jan 28, 2026',
-              medicines: [
-                {'name': 'Azithromycin 500mg', 'dosage': 'Once daily', 'duration': '3 days'},
-                {'name': 'Cough Syrup', 'dosage': '10ml thrice daily', 'duration': '5 days'},
-              ],
-              notes: 'Upper respiratory infection. Steam inhalation recommended.',
-              isActive: false,
-            ),
-            const SizedBox(height: 20),
-          ],
+  Widget _buildEmptyState() {
+    return ListView(
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+        Center(
+          child: Column(
+            children: [
+              Icon(Icons.description_outlined, size: 64, color: AppColors.adaptiveTextSecondary(context)),
+              const SizedBox(height: 16),
+              const Text('No prescriptions found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Your prescriptions will appear here.', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildSectionLabel(BuildContext context, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(text, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
-    );
-  }
+  Widget _buildRxCard(Map<String, dynamic> rx) {
+    final date = DateTime.parse(rx['date']);
+    final formattedDate = DateFormat('MMM dd, yyyy').format(date);
+    final medicines = rx['medicines'] as List<dynamic>;
 
-  Widget _buildRx({
-    required BuildContext context,
-    required String doctor,
-    required String date,
-    required List<Map<String, String>> medicines,
-    required String notes,
-    required bool isActive,
-    String? deliveryStatus,
-  }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.adaptiveSurface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isActive ? AppColors.primaryTeal.withValues(alpha: 0.3) : AppColors.adaptiveBorder(context)),
+        border: Border.all(color: AppColors.adaptiveBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Doctor & date
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: AppColors.doctorGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                    child: const Icon(Icons.medical_services, color: AppColors.doctorGreen, size: 16),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: AppColors.doctorGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.person, color: AppColors.doctorGreen, size: 20),
                   ),
-                  const SizedBox(width: 8),
-                  Text(doctor, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(rx['doctorName'] ?? 'Doctor', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(formattedDate, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
+                    ],
+                  ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.success.withValues(alpha: 0.1) : AppColors.adaptiveBackground(context),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isActive ? 'Active' : 'Completed',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isActive ? AppColors.success : AppColors.adaptiveTextSecondary(context)),
-                ),
-              ),
+              const Icon(Icons.verified, color: AppColors.primaryTeal, size: 20),
             ],
           ),
-          Text(date, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
-          const SizedBox(height: 12),
-
-          // Medicines
+          const Divider(height: 24),
+          
+          Text('Medicines:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context))),
+          const SizedBox(height: 8),
+          
           ...medicines.map((m) => Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: AppColors.adaptiveBackground(context), borderRadius: BorderRadius.circular(8)),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.medication, size: 16, color: AppColors.primaryTeal),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(m['name']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
-                          Text('${m['dosage']}  •  ${m['duration']}', style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
-                        ],
-                      ),
-                    ),
-                  ],
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.adaptiveBackground(context),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.medication, size: 18, color: AppColors.primaryTeal),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(m['medicineName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('${m['duration']} • ${m['timing']}', style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
+                    ],
+                  ),
                 ),
-              )),
+              ],
+            ),
+          )),
 
-          // Notes
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.notes, size: 14, color: AppColors.adaptiveTextSecondary(context)),
-              const SizedBox(width: 6),
-              Expanded(child: Text(notes, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context), fontStyle: FontStyle.italic))),
-            ],
-          ),
-
-          // Delivery status
-          if (deliveryStatus != null) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.primaryTeal.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.local_shipping, size: 14, color: AppColors.primaryTeal),
-                  const SizedBox(width: 6),
-                  Text(deliveryStatus, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primaryTeal)),
-                ],
-              ),
+          if (rx['extraNote'] != null && rx['extraNote'].toString().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.notes, size: 16, color: AppColors.adaptiveTextSecondary(context)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    rx['extraNote'],
+                    style: TextStyle(fontSize: 13, color: AppColors.adaptiveTextSecondary(context), fontStyle: FontStyle.italic),
+                  ),
+                ),
+              ],
             ),
           ],
         ],

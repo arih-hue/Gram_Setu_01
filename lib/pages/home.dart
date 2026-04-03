@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
+import '../core/constants.dart';
 import '../core/theme_provider.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -88,7 +89,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         ),
                         padding: const EdgeInsets.all(8),
                         child: Image.asset(
-                          'assets/images/logo.png',
+                          AppConstants.kLogoPath,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(

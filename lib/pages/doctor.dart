@@ -19,7 +19,6 @@ class DoctorDashboard extends StatefulWidget {
 
 class _DoctorDashboardState extends State<DoctorDashboard> {
   int _currentIndex = 0;
-  bool _isAvailable = true;
 
   @override
   Widget build(BuildContext context) {
@@ -33,41 +32,22 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
         onLogoutTap: () => Navigator.pushReplacementNamed(context, '/home'),
       ),
       body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
-              child: Column(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Greeting
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Greeting + Availability toggle
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Dr. ${userName.split(' ').first} 👨‍⚕️',
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context)),
-                          ),
-                          SizedBox(height: 4),
-                          Text('${user?['hospitalName'] ?? 'District Hospital'} • MCI: ${user?['mciNumber'] ?? 'N/A'}', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          Text(_isAvailable ? 'Available' : 'Offline',
-                              style: TextStyle(fontSize: 11, color: _isAvailable ? AppColors.success : AppColors.adaptiveTextSecondary(context), fontWeight: FontWeight.w600)),
-                          Switch(
-                            value: _isAvailable,
-                            onChanged: (v) => setState(() => _isAvailable = v),
-                            activeThumbColor: AppColors.doctorGreen,
-                          ),
-                        ],
-                      ),
-                    ],
+                  Text(
+                    'Dr. ${userName.split(' ').first} 👨‍⚕️',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context)),
                   ),
+                  const SizedBox(height: 4),
+                  Text('${user?['hospitalName'] ?? 'District Hospital'} • MCI: ${user?['mciNumber'] ?? 'N/A'}', 
+                    style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
                   const SizedBox(height: 20),
 
                   // Stats
@@ -181,15 +161,13 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                   const SizedBox(height: 20),
                 ],
               ),
-            ),
-            Positioned(
-              bottom: 20,
-              left: 20,
-              right: 20,
-              child: _buildBottomNavBar(),
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
+        child: _buildBottomNavBar(),
       ),
     );
   }
@@ -206,9 +184,8 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildNavItem(Icons.home_outlined, 'Home', 0),
-          _buildNavItem(Icons.schedule, 'Schedule', 1),
-          _buildNavItem(Icons.people_outline, 'Patients', 2),
-          _buildNavItem(Icons.person_outline, 'Profile', 3),
+          _buildNavItem(Icons.people_outline, 'Patients', 1),
+          _buildNavItem(Icons.person_outline, 'Profile', 2),
         ],
       ),
     ).animate().slideY(begin: 1, delay: 800.ms, duration: 600.ms, curve: Curves.easeOutQuart);
@@ -219,7 +196,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
     return GestureDetector(
       onTap: () {
         setState(() => _currentIndex = index);
-        if (index == 3) Navigator.pushNamed(context, '/profile', arguments: 'doctor');
+        if (index == 2) Navigator.pushNamed(context, '/profile', arguments: 'doctor');
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
@@ -254,45 +231,47 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
     );
   }
 
-  Widget _buildScheduleItem(String time, String patient, String reason, String status, Color statusColor) {
+  Widget _buildScheduleItem(String time, String patientName, String description, String status, Color statusColor) {
+    final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.adaptiveSurface(context),
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.adaptiveBorder(context)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.adaptiveSurfaceVariant(context),
+              color: statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(time, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+            child: Text(time, style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 12)),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(patient, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
-                Text(reason, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
+                Text(patientName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.textTheme.titleMedium?.color)),
+                Text(description, style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12)),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor)),
+            child: Text(status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
   }
 }
+

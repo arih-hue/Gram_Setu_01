@@ -203,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 36),
 
-              // UID Field (now used for all IDs like MCI and Asha ID)
+              // UID Field
               Text(
                 idLabel,
                 style: TextStyle(
@@ -266,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-
+              
               // Register text button
               if (_role == 'patient' || _role == 'doctor' || _role == 'asha')
                 Center(

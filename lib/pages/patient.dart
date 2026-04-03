@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:gram_setu/pages/video_call_page.dart';
 
-import '../core/app_colors.dart';
 import 'package:provider/provider.dart';
-import '../core/user_provider.dart';
+import '../core/app_colors.dart';
 
+import '../core/user_provider.dart';
+import '../services/api_service.dart';
 import '../widgets/gram_app_bar.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/action_card.dart';
@@ -19,6 +21,45 @@ class PatientDashboard extends StatefulWidget {
 
 class _PatientDashboardState extends State<PatientDashboard> {
   int _currentIndex = 0;
+  int _consultationCount = 0;
+  int _prescriptionCount = 0;
+  List<dynamic> _recentPrescriptions = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDashboardData();
+  }
+
+  Future<void> _fetchDashboardData() async {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user == null) return;
+    
+    setState(() => _isLoading = true);
+    try {
+      final uid = user['uid'];
+      
+      // Fetch consultation count
+      final consResponse = await ApiService.get('/consultation/count/$uid');
+      if (consResponse.statusCode == 200) {
+        _consultationCount = jsonDecode(consResponse.body)['count'];
+      }
+
+      // Fetch prescriptions (to get count and recent)
+      final rxResponse = await ApiService.get('/prescription/patient/$uid');
+      if (rxResponse.statusCode == 200) {
+        final rxData = jsonDecode(rxResponse.body)['prescriptions'] as List;
+        _prescriptionCount = rxData.length;
+        _recentPrescriptions = rxData.take(2).toList();
+      }
+    } catch (e) {
+      // Log error silently or use a logger
+
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,84 +74,77 @@ class _PatientDashboardState extends State<PatientDashboard> {
         roleLabel: 'Patient Dashboard',
         onLogoutTap: () => Navigator.pushReplacementNamed(context, '/home'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Greeting Row (no theme toggle)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hello, ${userName.split(' ').first} 👋',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: theme.textTheme.displayLarge?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'How are you feeling today?',
-                      style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: theme.cardTheme.color,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+      body: RefreshIndicator(
+        onRefresh: _fetchDashboardData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Greeting Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Your UID', style: TextStyle(fontSize: 10, color: theme.textTheme.bodySmall?.color)),
                       Text(
-                        uid,
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
+                        'Hello, ${userName.split(' ').first} 👋',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: theme.textTheme.displayLarge?.color),
                       ),
+                      const SizedBox(height: 4),
+                      Text('How are you feeling today?', style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color)),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.cardTheme.color,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('Your UID', style: TextStyle(fontSize: 10, color: theme.textTheme.bodySmall?.color)),
+                        Text(uid, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryTeal)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
 
-            // Stats
-            Row(
-              children: [
-                Expanded(
-                  child: StatCard(
-                    title: 'Active Rx',
-                    value: '2 Units',
-                    icon: Icons.medication_outlined,
-                    bgColor: AppColors.doctorGreen,
-                    textColor: Colors.white,
-                    iconBgColor: Colors.white.withValues(alpha: 0.2),
-                    iconColor: Colors.white,
+              // Stats
+              Row(
+                children: [
+                  Expanded(
+                    child: StatCard(
+                      title: 'Active Rx',
+                      value: '$_prescriptionCount Units',
+                      icon: Icons.medication_outlined,
+                      bgColor: AppColors.doctorGreen,
+                      textColor: Colors.white,
+                      iconBgColor: Colors.white.withValues(alpha: 0.2),
+                      iconColor: Colors.white,
+                    ),
                   ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: StatCard(
-                    title: 'Consultations',
-                    value: '3 Done',
-                    icon: Icons.calendar_today_outlined,
-                    bgColor: AppColors.accentYellow,
-                    textColor: AppColors.adaptiveTextPrimary(context),
-                    iconBgColor: Colors.white.withValues(alpha: 0.4),
-                    iconColor: AppColors.adaptiveTextPrimary(context),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: StatCard(
+                      title: 'Consultations',
+                      value: '$_consultationCount Done',
+                      icon: Icons.calendar_today_outlined,
+                      bgColor: AppColors.accentYellow,
+                      textColor: AppColors.adaptiveTextPrimary(context),
+                      iconBgColor: Colors.white.withValues(alpha: 0.4),
+                      iconColor: AppColors.adaptiveTextPrimary(context),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                ],
+              ),
+              const SizedBox(height: 24),
 
             // Quick Actions
             const SectionHeader(title: 'Quick Actions'),
@@ -170,18 +204,28 @@ class _PatientDashboardState extends State<PatientDashboard> {
               onTap: () => Navigator.pushNamed(context, '/health_assistant'),
             ),
 
-            const SizedBox(height: 20),
 
-            // Active Prescriptions
-            SectionHeader(
-              title: 'Active Prescriptions',
-              actionText: 'View All',
-              onAction: () => Navigator.pushNamed(context, '/prescriptions'),
-            ),
-            _buildPrescriptionCard(context, 'Paracetamol 500mg', 'Twice daily after meals', 'Next dose: 2:00 PM'),
-            _buildPrescriptionCard(context, 'Amoxicillin 250mg', 'Thrice daily', 'Next dose: 6:00 PM'),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+
+              // Recent Prescriptions
+              SectionHeader(
+                title: 'Recent Prescriptions',
+                actionText: 'View All',
+                onAction: () => Navigator.pushNamed(context, '/prescriptions'),
+              ),
+              if (_isLoading)
+                const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
+              if (!_isLoading && _recentPrescriptions.isEmpty)
+                const Text('No recent prescriptions'),
+              ..._recentPrescriptions.map((rx) => _buildPrescriptionCard(
+                context, 
+                rx['medicines'][0]['medicineName'], 
+                rx['medicines'][0]['timing'], 
+                'From Dr. ${rx['doctorName']}'
+              )),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _buildBottomNavBar(),
@@ -235,6 +279,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
           'user': ModalRoute.of(context)?.settings.arguments,
         });
         }
+
         if (index == 2) Navigator.pushNamed(context, '/settings');
       },
       behavior: HitTestBehavior.opaque,
@@ -249,21 +294,10 @@ class _PatientDashboardState extends State<PatientDashboard> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? AppColors.primaryTeal : theme.textTheme.bodySmall?.color,
-              size: 24,
-            ),
+            Icon(isSelected ? activeIcon : icon, color: isSelected ? AppColors.primaryTeal : theme.textTheme.bodySmall?.color, size: 24),
             if (isSelected) ...[
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.primaryTeal,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
+              Text(label, style: const TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.w600, fontSize: 13)),
             ],
           ],
         ),
@@ -271,7 +305,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
     );
   }
 
-  Widget _buildPrescriptionCard(BuildContext context, String name, String dosage, String nextDose) {
+  Widget _buildPrescriptionCard(BuildContext context, String name, String dosage, String subtitle) {
     final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -285,10 +319,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primaryTeal.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
+            decoration: BoxDecoration(color: AppColors.primaryTeal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
             child: const Icon(Icons.medication_outlined, color: AppColors.primaryTeal),
           ),
           const SizedBox(width: 14),
@@ -299,14 +330,11 @@ class _PatientDashboardState extends State<PatientDashboard> {
                 Text(name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: theme.textTheme.titleMedium?.color)),
                 Text(dosage, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color)),
                 const SizedBox(height: 2),
-                Text(nextDose, style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color)),
+                Text(subtitle, style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color)),
               ],
             ),
           ),
-          TextButton(
-            onPressed: () {},
-            child: const Text('Mark Taken', style: TextStyle(fontWeight: FontWeight.w600)),
-          ),
+          const Icon(Icons.chevron_right, size: 20, color: AppColors.primaryTeal),
         ],
       ),
     );

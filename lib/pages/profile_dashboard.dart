@@ -487,10 +487,11 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
                 if (confirm == true) {
                   try {
                     await AuthService.deleteProfile(identifiers);
+                    if (!context.mounted) return;
                     Provider.of<UserProvider>(context, listen: false).setUser({});
                     Navigator.pushReplacementNamed(context, '/home');
                   } catch (e) {
-                    if (mounted) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Failed to delete: $e'),
@@ -499,6 +500,8 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
                       );
                     }
                   }
+
+
                 }
               },
               style: OutlinedButton.styleFrom(

@@ -7,6 +7,8 @@ import '../widgets/action_card.dart';
 import '../widgets/section_header.dart';
 import 'package:provider/provider.dart';
 import '../core/user_provider.dart';
+import 'asha_consultation_screen.dart';
+import 'view_prescription_search_screen.dart';
 
 class AshaWorkerDashboard extends StatefulWidget {
   const AshaWorkerDashboard({super.key});
@@ -77,7 +79,39 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
               const SizedBox(height: 24),
 
               // Quick Actions
-              const SectionHeader(title: 'Quick Actions'),
+              const SectionHeader(title: 'Patient Actions'),
+              ActionCard(
+                title: 'Book Consultation',
+                subtitle: 'Search UID and book doctor for patient',
+                icon: Icons.calendar_month_outlined,
+                isDark: true,
+                accentColor: AppColors.ashaWorkerPink,
+                onTap: () async {
+                   Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AshaConsultationScreen(bookedBy: 'asha'),
+                    ),
+                  );
+                },
+              ),
+              ActionCard(
+                title: 'View Prescription',
+                subtitle: 'Search patient UID and view medical records',
+                icon: Icons.description_outlined,
+                isDark: true,
+                accentColor: AppColors.softBlue,
+                onTap: () {
+                   Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ViewPrescriptionSearchScreen(themeColor: AppColors.ashaWorkerPink),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              const SectionHeader(title: 'Field Services'),
               ActionCard(
                 title: 'Add New Patient',
                 subtitle: 'Register a new villager with health ID',
@@ -87,6 +121,7 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
                 onTap: () => Navigator.pushNamed(context, '/add_patient'),
               ),
               ActionCard(
+
                 title: 'Book Consultation',
                 subtitle: 'Book a doctor visit for a patient',
                 icon: Icons.calendar_month_outlined,
@@ -110,20 +145,14 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
                 },
               ),
               ActionCard(
+
+
                 title: 'Record Vitals',
                 subtitle: 'Enter patient UID and log vitals',
                 icon: Icons.monitor_heart_outlined,
                 isDark: true,
-                accentColor: AppColors.ashaWorkerPink,
+                accentColor: AppColors.panchayatPurple,
                 onTap: () => Navigator.pushNamed(context, '/vitals_recorder'),
-              ),
-              ActionCard(
-                title: 'Report Emergency',
-                subtitle: 'Flag urgent health cases',
-                icon: Icons.emergency_outlined,
-                isDark: true,
-                accentColor: AppColors.emergencyRed,
-                onTap: () => Navigator.pushNamed(context, '/emergency'),
               ),
               ActionCard(
                 title: 'Health Awareness',
@@ -134,73 +163,11 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
                 onTap: () => Navigator.pushNamed(context, '/health_awareness'),
               ),
               const SizedBox(height: 24),
-
-              // Recent Visits
-              const SectionHeader(title: 'Recent Visits'),
-              _buildVisitCard(theme, 'Ramesh Yadav', 'UID003829', 'BP: 130/85, HR: 78', '10:30 AM', false),
-              _buildVisitCard(theme, 'Geeta Devi', 'UID004512', 'BP: 160/95, Sugar: 280', '11:15 AM', true),
-              _buildVisitCard(theme, 'Mohan Lal', 'UID001837', 'BP: 120/80, HR: 72', '12:00 PM', false),
-              _buildVisitCard(theme, 'Kavita Bai', 'UID005923', 'SpO2: 93%, Fever: 102°F', '1:30 PM', true),
-              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
       bottomNavigationBar: _buildBottomNavBar(),
-    );
-  }
-
-  Widget _buildVisitCard(ThemeData theme, String name, String uid, String vitals, String time, bool hasAlert) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: hasAlert ? AppColors.warning.withValues(alpha: 0.5) : theme.dividerColor.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: hasAlert ? AppColors.warning.withValues(alpha: 0.1) : AppColors.ashaWorkerPink.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              hasAlert ? Icons.warning_amber : Icons.person_outline,
-              color: hasAlert ? AppColors.warning : AppColors.ashaWorkerPink,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textTheme.titleMedium?.color)),
-                    const SizedBox(width: 6),
-                    if (hasAlert)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.warning.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text('Alert', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.warning)),
-                      ),
-                  ],
-                ),
-                Text(uid, style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color)),
-                const SizedBox(height: 2),
-                Text(vitals, style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color)),
-              ],
-            ),
-          ),
-          Text(time, style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color)),
-        ],
-      ),
     );
   }
 
@@ -260,21 +227,10 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? AppColors.ashaWorkerPink : theme.textTheme.bodySmall?.color,
-              size: 24,
-            ),
+            Icon(isSelected ? activeIcon : icon, color: isSelected ? AppColors.ashaWorkerPink : theme.textTheme.bodySmall?.color, size: 24),
             if (isSelected) ...[
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.ashaWorkerPink,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
+              Text(label, style: const TextStyle(color: AppColors.ashaWorkerPink, fontWeight: FontWeight.w600, fontSize: 13)),
             ],
           ],
         ),
