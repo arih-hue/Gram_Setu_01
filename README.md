@@ -4,7 +4,6 @@
 A Flutter + Node.js platform that connects **villagers, ASHA workers, doctors, and panchayat** for seamless healthcare access, registration, and video consultations.
 
 ![Gram Setu Logo](assets/images/logo.png)  
-*(Add your logo path if available)*
 
 ## 🎯 Problem It Solves
 In rural India, accessing quality healthcare is difficult due to distance, lack of doctors, and poor connectivity.  
