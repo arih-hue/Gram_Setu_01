@@ -21,7 +21,7 @@ class AppColors {
   static const Color textHint = Color(0xFF94A3B8); 
 
   // Light Theme Colors
-  static const Color backgroundLight = Color(0xFFF8FAFC);
+  static const Color backgroundLight = Color(0xFFB3E5FC); // Colors.lightBlue[100]
   static const Color surfaceLight = Colors.white;
   static const Color surfaceVariantLight = Color(0xFFF1F5F9);
   static const Color textPrimaryLight = Color(0xFF0F172A);
@@ -96,10 +96,10 @@ class AppColors {
       Theme.of(context).brightness == Brightness.dark ? textHint : textHintLight;
 
   static Color adaptiveBackground(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? background : backgroundLight;
+      Theme.of(context).scaffoldBackgroundColor;
 
   static Color adaptiveSurface(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? surface : surfaceLight;
+      Theme.of(context).cardTheme.color ?? (Theme.of(context).brightness == Brightness.dark ? surface : surfaceLight);
 
   static Color adaptiveSurfaceVariant(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark ? surfaceVariant : surfaceVariantLight;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/app_colors.dart';
 import '../widgets/gram_app_bar.dart';
+import '../services/location_service.dart';
 
 class AddPatientScreen extends StatefulWidget {
   const AddPatientScreen({super.key});
@@ -21,6 +22,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
   String _gender = 'Male';
   bool _isSubmitted = false;
   bool _isLoading = false;
+  bool _isFetchingLocation = false;
   String _generatedUid = '';
 
   @override
@@ -33,6 +35,24 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     _conditionsController.dispose();
     _allergiesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchGPSLocation() async {
+    setState(() => _isFetchingLocation = true);
+    try {
+      final location = await LocationService.getCurrentLocation();
+      if (mounted) {
+        _villageController.text = location;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFetchingLocation = false);
+    }
   }
 
   Future<void> _submitForm() async {
@@ -140,7 +160,35 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
           ),
           const SizedBox(height: 16),
 
-          _buildLabel(theme, 'Village *'),
+          _buildLabel(
+            theme,
+            'Village *',
+            trailing: GestureDetector(
+              onTap: _isFetchingLocation ? null : _fetchGPSLocation,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isFetchingLocation)
+                    const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ashaWorkerPink),
+                    )
+                  else
+                    const Icon(Icons.gps_fixed, size: 16, color: AppColors.ashaWorkerPink),
+                  const SizedBox(width: 4),
+                  Text(
+                    _isFetchingLocation ? 'Fetching...' : 'Fetch GPS',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.ashaWorkerPink,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _villageController,
@@ -283,8 +331,21 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     );
   }
 
-  Widget _buildLabel(ThemeData theme, String text) {
-    return Text(text, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textTheme.titleMedium?.color));
+  Widget _buildLabel(ThemeData theme, String text, {Widget? trailing}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: theme.textTheme.titleMedium?.color,
+          ),
+        ),
+        if (trailing != null) trailing,
+      ],
+    );
   }
 
   Widget _infoRow(ThemeData theme, String label, String value) {

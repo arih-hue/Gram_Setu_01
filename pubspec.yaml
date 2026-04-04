@@ -41,14 +41,23 @@ dependencies:
   google_sign_in: ^6.2.1
   http: ^1.2.1
   flutter_secure_storage: ^9.2.1
-  livekit_client: ^2.4.1
-  permission_handler: ^11.3.1
+  url_launcher: ^6.3.2
+  geolocator: 13.0.2
+  geocoding: 3.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -62,8 +71,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-    # - assets/images/
+  assets:
+    - assets/images/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

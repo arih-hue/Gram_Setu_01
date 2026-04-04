@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/user_provider.dart';
 import '../services/auth_service.dart';
+import '../services/location_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -20,6 +21,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _villageController = TextEditingController();
   final _blockController = TextEditingController();
   String? _selectedGender;
+  bool _isFetchingLocation = false;
   
   Map<String, dynamic>? _userData;
   bool _isInit = false;
@@ -27,8 +29,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final List<String> _genders = [
     'Male',
     'Female',
-    'Attack Helicopter',
-    'Croissant'
+    'Others'
   ];
 
   @override
@@ -64,6 +65,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _villageController.dispose();
     _blockController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchGPSLocation() async {
+    setState(() => _isFetchingLocation = true);
+    try {
+      final location = await LocationService.getCurrentLocation();
+      if (mounted) {
+        final role = _userData?['role'] ?? 'patient';
+        if (role == 'patient') {
+          _locationController.text = location;
+        } else if (role == 'panchayat') {
+          final parts = location.split(', ');
+          if (parts.length >= 2) {
+            _villageController.text = parts[0];
+            _blockController.text = parts[1];
+          } else {
+            _villageController.text = location;
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFetchingLocation = false);
+    }
   }
 
   bool _isLoading = false;
@@ -222,7 +252,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: 20),
 
               // Location Field
-              _buildLabel(theme, 'Location (Village / Block)'),
+              _buildLabel(
+                theme,
+                'Location (Village / Block)',
+                trailing: GestureDetector(
+                  onTap: _isFetchingLocation ? null : _fetchGPSLocation,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_isFetchingLocation)
+                        const SizedBox(
+                          height: 14,
+                          width: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryTeal),
+                        )
+                      else
+                        const Icon(Icons.gps_fixed, size: 16, color: AppColors.primaryTeal),
+                      const SizedBox(width: 4),
+                      Text(
+                        _isFetchingLocation ? 'Fetching...' : 'Fetch GPS',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primaryTeal,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               _buildTextField(
                 controller: _locationController,
                 hintText: 'Enter your village or location',
@@ -266,7 +324,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Panchayat-only fields
             if ((_userData?['role'] ?? 'patient') == 'panchayat') ...[
               // Village Field
-              _buildLabel(theme, 'Village'),
+              _buildLabel(
+                theme,
+                'Village',
+                trailing: GestureDetector(
+                  onTap: _isFetchingLocation ? null : _fetchGPSLocation,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_isFetchingLocation)
+                        const SizedBox(
+                          height: 14,
+                          width: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryTeal),
+                        )
+                      else
+                        const Icon(Icons.gps_fixed, size: 16, color: AppColors.primaryTeal),
+                      const SizedBox(width: 4),
+                      Text(
+                        _isFetchingLocation ? 'Fetching...' : 'Fetch GPS',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primaryTeal,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               _buildTextField(
                 controller: _villageController,
                 hintText: 'Enter village name',
@@ -309,16 +395,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildLabel(ThemeData theme, String text) {
+  Widget _buildLabel(ThemeData theme, String text, {Widget? trailing}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: theme.textTheme.titleMedium?.color,
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: theme.textTheme.titleMedium?.color,
+            ),
+          ),
+          if (trailing != null) trailing,
+        ],
       ),
     );
   }

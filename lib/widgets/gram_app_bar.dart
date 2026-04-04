@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/theme_provider.dart';
+import '../core/emergency_util.dart';
 
 class GramAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? roleLabel;
@@ -83,7 +84,7 @@ class GramAppBar extends StatelessWidget implements PreferredSizeWidget {
         if (showSos)
           GestureDetector(
             onTap: onSosTap ??
-                () => Navigator.pushNamed(context, '/emergency'),
+                () => EmergencyUtil.callEmergency(context),
             child: Container(
               margin: const EdgeInsets.only(right: 4),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

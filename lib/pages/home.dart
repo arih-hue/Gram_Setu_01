@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/constants.dart';
 import '../core/theme_provider.dart';
+import '../core/emergency_util.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -71,7 +72,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                               : AppColors.primaryTeal,
                           size: 24,
                         ),
-                      ).animate().scale(delay: 400.ms),
+                      ).animate().scale(delay: 300.ms),
                       const SizedBox(width: 12),
                       Container(
                         height: 56,
@@ -98,7 +99,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                 size: 32,
                               ),
                         ),
-                      ).animate().scale(delay: 300.ms),
+                      ).animate().scale(delay: 450.ms),
                     ],
                   ),
                 ],
@@ -153,6 +154,53 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: GestureDetector(
+            onTap: () => EmergencyUtil.callEmergency(context),
+            child: Container(
+              height: 64,
+              decoration: BoxDecoration(
+                gradient: AppColors.emergencyGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.emergencyRed.withValues(alpha: 0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.emergency_share, color: Colors.white, size: 24),
+                      const SizedBox(width: 12),
+                      Text(
+                        'EMERGENCY SOS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    right: 20,
+                    child: Icon(Icons.arrow_forward_ios, color: Colors.white.withValues(alpha: 0.5), size: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ).animate().slideY(begin: 1, duration: 800.ms, curve: Curves.easeOutQuart),
       ),
     );
   }

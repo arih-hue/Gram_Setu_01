@@ -4,6 +4,7 @@ import '../core/app_colors.dart';
 import '../services/auth_service.dart';
 import 'package:provider/provider.dart';
 import '../core/user_provider.dart';
+import '../services/location_service.dart';
 
 class NewPanchayatRegistrationScreen extends StatefulWidget {
   const NewPanchayatRegistrationScreen({super.key});
@@ -18,6 +19,7 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
   final _blockController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _isFetchingLocation = false;
 
   @override
   void dispose() {
@@ -27,6 +29,30 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchGPSLocation() async {
+    setState(() => _isFetchingLocation = true);
+    try {
+      final location = await LocationService.getCurrentLocation();
+      if (mounted) {
+        final parts = location.split(', ');
+        if (parts.length >= 2) {
+          _villageController.text = parts[0];
+          _blockController.text = parts[1];
+        } else {
+          _villageController.text = location;
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFetchingLocation = false);
+    }
   }
 
   bool _isLoading = false;
@@ -149,7 +175,35 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
             const SizedBox(height: 20),
 
             // Village Field
-            _buildLabel(theme, 'Village'),
+            _buildLabel(
+              theme,
+              'Village',
+              trailing: GestureDetector(
+                onTap: _isFetchingLocation ? null : _fetchGPSLocation,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isFetchingLocation)
+                      const SizedBox(
+                        height: 14,
+                        width: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.panchayatPurple),
+                      )
+                    else
+                      const Icon(Icons.gps_fixed, size: 16, color: AppColors.panchayatPurple),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isFetchingLocation ? 'Fetching...' : 'Fetch GPS',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.panchayatPurple,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             _buildTextField(
               controller: _villageController,
               hintText: 'Enter Village name',
@@ -231,16 +285,22 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
     );
   }
 
-  Widget _buildLabel(ThemeData theme, String text) {
+  Widget _buildLabel(ThemeData theme, String text, {Widget? trailing}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: theme.textTheme.titleMedium?.color,
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: theme.textTheme.titleMedium?.color,
+            ),
+          ),
+          if (trailing != null) trailing,
+        ],
       ),
     );
   }

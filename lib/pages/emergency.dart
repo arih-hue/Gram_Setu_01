@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../core/app_colors.dart';
+import '../core/emergency_util.dart';
 
 class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
@@ -119,13 +120,13 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                 width: double.infinity,
                 height: 54,
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => EmergencyUtil.callEmergency(context),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.emergencyRed, width: 2),
                     foregroundColor: AppColors.emergencyRed,
                   ),
                   icon: const Icon(Icons.call),
-                  label: Text('Call 108 Ambulance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  label: const Text('Call 108 Ambulance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
 
@@ -202,7 +203,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                 width: double.infinity,
                 height: 54,
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => EmergencyUtil.callEmergency(context),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.white, width: 2),
                     foregroundColor: Colors.white,
@@ -247,6 +248,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
 
   void _triggerSos() {
     setState(() => _sosTriggered = true);
+    EmergencyUtil.callEmergency(context);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('🚨 Emergency alert sent to Panchayat and doctors!'),
