@@ -18,22 +18,11 @@ router.get('/village', async (req, res) => {
             'location.village': village 
         });
 
-        // 2. Active Cases (status='pending') in this village
-        // Since Consultation model stores patientUID, we might need a join or filter
-        // But the prompt says: "Count of all consultation requests with status = 'pending' AND patient's village = panchayat user's village"
-        // We'll need to fetch all pending consultations and match with patient's village
-        
-        const pendingConsultations = await Consultation.find({ status: 'pending' });
-        
-        // Fetch patient UIDs for these consultations to check their villages
-        const patientUIDs = pendingConsultations.map(c => c.patientUID);
-        const patientsInVillage = await User.find({ 
-            uid: { $in: patientUIDs },
-            'location.village': village 
-        }).select('uid');
-        
-        const villagePatientUIDs = new Set(patientsInVillage.map(p => p.uid));
-        const activeCases = pendingConsultations.filter(c => villagePatientUIDs.has(c.patientUID)).length;
+        // 2. Active Consultations in this village
+        const activeCases = await Consultation.countDocuments({
+            status: 'pending',
+            village: village
+        });
 
         // 3. Total Doctors in matching village or block
         const totalDoctors = await User.countDocuments({
@@ -62,6 +51,40 @@ router.get('/village', async (req, res) => {
         });
     } catch (error) {
         console.error('Village Stats Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// GET /api/stats/asha?ashaId=X&village=Y
+router.get('/asha', async (req, res) => {
+    try {
+        const { ashaId, village } = req.query;
+
+        if (!ashaId || !village) {
+            return res.status(400).json({ success: false, message: 'ashaId and village are required' });
+        }
+
+        // 1. Patients in this village
+        const villagePatients = await User.countDocuments({
+            role: 'patient',
+            'location.village': village
+        });
+
+        // 2. Consultations booked by this ASHA
+        // We'll search by bookedById = ashaId OR bookedBy = 'asha' + some other logic if available
+        // Since we just added bookedById, historic data might not have it.
+        // For now, let's look for bookedById
+        const bookedConsultations = await Consultation.countDocuments({
+            bookedById: ashaId
+        });
+
+        res.status(200).json({
+            success: true,
+            villagePatients,
+            bookedConsultations
+        });
+    } catch (error) {
+        console.error('ASHA Stats Error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });

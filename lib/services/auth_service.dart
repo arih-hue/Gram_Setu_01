@@ -181,6 +181,44 @@ class AuthService {
     }
   }
 
+  static Future<Map<String, dynamic>?> registerPharmacist({
+    required String name,
+    required String pharmacistId,
+    required String phone,
+    required String village,
+    required String block,
+    required String fullLocation,
+    required String password,
+  }) async {
+    try {
+      final regUrl = '$_baseUrl/api/auth/register';
+      final response = await http.post(
+        Uri.parse(regUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'pharmacistId': pharmacistId,
+          'phone': phone,
+          'village': village,
+          'block': block,
+          'location': fullLocation,
+          'password': password,
+          'role': 'pharmacist',
+        }),
+      ).timeout(AppConstants.kRequestTimeout);
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 201 && data['success'] == true) {
+        await _storage.write(key: 'jwt_token', value: data['token']);
+        return data['user'];
+      } else {
+        throw Exception(data['message'] ?? 'Registration failed');
+      }
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   static Future<Map<String, dynamic>?> loginWithPassword({
     required String identifier,
     required String password,

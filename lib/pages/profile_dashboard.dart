@@ -56,6 +56,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
             if (_role == 'doctor') ..._buildDoctorSections(context, _role),
             if (_role == 'asha') ..._buildAshaSections(context, _role),
             if (_role == 'panchayat') ..._buildPanchayatSections(context, _role),
+            if (_role == 'pharmacist') ..._buildPharmacistSections(context, _role),
 
             const SizedBox(height: 24),
 
@@ -130,6 +131,9 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
         break;
       case 'panchayat':
         subtitle = 'Panchayat ID: ${userData?['panchayatId'] ?? 'ID-N/A'}';
+        break;
+      case 'pharmacist':
+        subtitle = 'Pharmacist ID: ${userData?['pharmacistId'] ?? 'ID-N/A'}';
         break;
       case 'patient':
         subtitle = 'UID: ${userData?['uid'] ?? _safeId(userData?['_id'])}';
@@ -306,6 +310,29 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
     ];
   }
 
+  List<Widget> _buildPharmacistSections(BuildContext context, String role) {
+    final userData = Provider.of<UserProvider>(context).user;
+    return [
+      _buildSection(role, 'Pharmacy Info', [
+        _ProfileField(
+          label: 'Pharmacist ID',
+          value: userData?['pharmacistId'] ?? 'ID-N/A',
+          icon: Icons.badge_outlined,
+        ),
+        _ProfileField(
+          label: 'Village',
+          value: userData?['village'] ?? userData?['location']?['village'] ?? 'Not set',
+          icon: Icons.home_outlined,
+        ),
+        _ProfileField(
+          label: 'Block',
+          value: userData?['block'] ?? userData?['location']?['block'] ?? 'Not set',
+          icon: Icons.map_outlined,
+        ),
+      ]),
+    ];
+  }
+
   Widget _buildSection(String role, String title, List<_ProfileField> fields) {
     return Builder(
       builder: (context) {
@@ -447,10 +474,14 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
                     await AuthService.deleteProfile({
                       'id': userData['_id'],
                       'uid': userData['uid'],
+                      'mciNumber': userData['mciNumber'],
+                      'ashaId': userData['ashaId'],
+                      'panchayatId': userData['panchayatId'],
+                      'pharmacistId': userData['pharmacistId'],
                       'role': userData['role'] ?? role,
                     });
                   }
-                  Provider.of<UserProvider>(context, listen: false).setUser({});
+                  Provider.of<UserProvider>(context, listen: false).clearUser();
                   Navigator.pushReplacementNamed(context, '/home');
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -476,9 +507,8 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
           width: double.infinity,
           height: 56,
           child: OutlinedButton.icon(
-            onPressed: () async {
-              await AuthService.signOut();
-              Provider.of<UserProvider>(context, listen: false).setUser({});
+            onPressed: () {
+              Provider.of<UserProvider>(context, listen: false).clearUser();
               Navigator.pushReplacementNamed(context, '/home');
             },
             style: OutlinedButton.styleFrom(

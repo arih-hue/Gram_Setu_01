@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
+import '../core/user_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/gram_app_bar.dart';
 
@@ -75,6 +77,9 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
     }
 
     setState(() => _isLoading = true);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final bookedById = userProvider.user?['_id'] ?? userProvider.user?['uid'];
+
     final body = {
       'patientName': _patientData!['name'],
       'patientUID': _patientData!['uid'],
@@ -82,6 +87,7 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
       'patientGender': _patientData!['gender'] ?? 'Others',
       'reason': _reasonController.text.trim(),
       'bookedBy': widget.bookedBy,
+      'bookedById': bookedById,
     };
 
     try {

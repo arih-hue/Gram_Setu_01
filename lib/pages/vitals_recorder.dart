@@ -1,6 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
+import '../core/user_provider.dart';
+import '../core/models/vitals.dart';
+import '../services/api_service.dart';
+import '../services/vitals_service.dart';
 import '../widgets/gram_app_bar.dart';
+import '../widgets/translated_text.dart';
+import 'rppg_monitor_screen.dart';
 
 class VitalsRecorderScreen extends StatefulWidget {
   const VitalsRecorderScreen({super.key});
@@ -13,6 +21,9 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
   final _uidController = TextEditingController();
   bool _patientFound = false;
   bool _submitted = false;
+  bool _isLoadingSearch = false;
+  bool _isSubmitting = false;
+  Map<String, dynamic>? _patientData;
 
   final _bpSystolicController = TextEditingController();
   final _bpDiastolicController = TextEditingController();
@@ -37,6 +48,73 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
     super.dispose();
   }
 
+  Future<void> _searchUID() async {
+    final uid = _uidController.text.trim();
+    if (uid.isEmpty) return;
+
+    setState(() {
+      _isLoadingSearch = true;
+      _patientFound = false;
+    });
+
+    try {
+      final response = await ApiService.get('/users/uid/$uid');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _patientData = data['user'];
+          _patientFound = true;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: TranslatedText('Patient not found with UID: $uid')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error searching patient')),
+      );
+    } finally {
+      setState(() => _isLoadingSearch = false);
+    }
+  }
+
+  Future<void> _submitVitals() async {
+    if (!_patientFound) return;
+
+    setState(() => _isSubmitting = true);
+
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final recordedBy = "${user?['role'] ?? 'Worker'} ${user?['name'] ?? ''}".trim();
+
+    final vitals = Vitals(
+      id: '',
+      patientUID: _uidController.text.trim(),
+      systolic: int.tryParse(_bpSystolicController.text),
+      diastolic: int.tryParse(_bpDiastolicController.text),
+      heartRate: int.tryParse(_hrController.text),
+      spo2: int.tryParse(_spo2Controller.text),
+      temperature: double.tryParse(_tempController.text),
+      bloodSugar: int.tryParse(_sugarController.text),
+      weight: double.tryParse(_weightController.text),
+      notes: _symptomsController.text.trim(),
+      recordedBy: recordedBy,
+      timestamp: DateTime.now(),
+    );
+
+    final success = await VitalsService.addVitals(vitals);
+
+    setState(() => _isSubmitting = false);
+
+    if (success) {
+      setState(() => _submitted = true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to record vitals. Please try again.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,9 +131,9 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Record Patient Vitals', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
+        TranslatedText('Record Patient Vitals', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
         const SizedBox(height: 6),
-        Text('Enter patient UID and record health data', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
+        TranslatedText('Enter patient UID and record health data', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
         const SizedBox(height: 20),
 
         // UID Search
@@ -71,15 +149,17 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: () => setState(() => _patientFound = true),
-              style: ElevatedButton.styleFrom(minimumSize: const Size(0, 52)),
-              child: Text('Search'),
-            ),
+            _isLoadingSearch
+                ? const SizedBox(width: 50, height: 50, child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2)))
+                : ElevatedButton(
+                    onPressed: _searchUID,
+                    style: ElevatedButton.styleFrom(minimumSize: const Size(0, 52)),
+                    child: TranslatedText('Search'),
+                  ),
           ],
         ),
 
-        if (_patientFound) ...[
+        if (_patientFound && _patientData != null) ...[
           const SizedBox(height: 16),
 
           // Patient info
@@ -92,13 +172,13 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.check_circle, color: AppColors.success, size: 20),
-                SizedBox(width: 10),
+                const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Ramesh Yadav', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
-                    Text('Age: 42 • Male • Village: Rampur', style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
+                    Text(_patientData!['name'] ?? 'Unknown Patient', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+                    Text('Age: ${_patientData!['age'] ?? 'N/A'} • ${_patientData!['gender'] ?? 'N/A'} • Village: ${(_patientData!['location']?['village']) ?? 'N/A'}', style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
                   ],
                 ),
               ],
@@ -107,7 +187,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
           const SizedBox(height: 24),
 
           // Vitals Form
-          Text('Blood Pressure', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+          TranslatedText('Blood Pressure', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -119,7 +199,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text('/', style: TextStyle(fontSize: 20, color: AppColors.adaptiveTextSecondary(context))),
               ),
               Expanded(
@@ -139,7 +219,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Heart Rate', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+                    TranslatedText('Heart Rate', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _hrController,
@@ -154,7 +234,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('SpO2', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+                    TranslatedText('SpO2', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _spo2Controller,
@@ -174,7 +254,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Blood Sugar', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+                    TranslatedText('Blood Sugar', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _sugarController,
@@ -189,7 +269,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Weight', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+                    TranslatedText('Weight', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _weightController,
@@ -203,7 +283,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
           ),
           const SizedBox(height: 16),
 
-          Text('Temperature', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+          TranslatedText('Temperature', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
           const SizedBox(height: 8),
           TextField(
             controller: _tempController,
@@ -212,7 +292,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
           ),
           const SizedBox(height: 16),
 
-          Text('Symptoms / Notes', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
+          TranslatedText('Symptoms / Notes', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adaptiveTextPrimary(context))),
           const SizedBox(height: 8),
           TextField(
             controller: _symptomsController,
@@ -236,27 +316,40 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Camera Scan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                      Text('Auto-detect HR & SpO2', style: TextStyle(color: AppColors.adaptiveTextSecondary(context), fontSize: 12)),
+                      const TranslatedText('Camera Scan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                      const TranslatedText('Auto-detect HR & SpO2', style: TextStyle(color: Colors.white70, fontSize: 12)),
                     ],
                   ),
                 ),
                 OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      _hrController.text = '76';
-                      _spo2Controller.text = '97';
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('rPPG scan complete: HR 76, SpO2 97%'), backgroundColor: AppColors.primaryTeal),
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RPPGMonitorScreen(patientUID: _uidController.text.trim()),
+                      )
                     );
+
+                    if (result != null && result is Map) {
+                      setState(() {
+                         if (result.containsKey('heartRate')) {
+                           _hrController.text = result['heartRate'].toString();
+                         }
+                         if (result.containsKey('spo2')) {
+                           _spo2Controller.text = result['spo2'].toString();
+                         }
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('rPPG scan integrated successfully'), backgroundColor: AppColors.primaryTeal),
+                      );
+                    }
                   },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.white),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 36),
                   ),
-                  child: const Text('Scan', style: TextStyle(fontSize: 13)),
+                  child: const TranslatedText('Scan', style: TextStyle(fontSize: 13)),
                 ),
               ],
             ),
@@ -267,10 +360,12 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
           SizedBox(
             width: double.infinity,
             height: 54,
-            child: ElevatedButton(
-              onPressed: () => setState(() => _submitted = true),
-              child: const Text('Submit Vitals'),
-            ),
+            child: _isSubmitting
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _submitVitals,
+                    child: const TranslatedText('Submit Vitals'),
+                  ),
           ),
         ],
         const SizedBox(height: 20),
@@ -279,6 +374,9 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
   }
 
   Widget _buildSuccessView() {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final recordedBy = "${user?['role'] ?? 'Worker'} ${user?['name'] ?? ''}".trim();
+
     return Column(
       children: [
         const SizedBox(height: 60),
@@ -288,9 +386,9 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
           child: const Icon(Icons.check_circle, color: AppColors.success, size: 64),
         ),
         const SizedBox(height: 24),
-        Text('Vitals Recorded!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
+        TranslatedText('Vitals Recorded!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
         const SizedBox(height: 8),
-        Text('Data has been saved to the patient\'s health record.', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context)), textAlign: TextAlign.center),
+        TranslatedText('Data has been saved to the patient\'s health record.', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context)), textAlign: TextAlign.center),
         const SizedBox(height: 32),
 
         Container(
@@ -299,23 +397,23 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
           child: Column(
             children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('Patient', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
-                Text('Ramesh Yadav', style: TextStyle(fontWeight: FontWeight.w600)),
+                TranslatedText('Patient', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
+                Text(_patientData?['name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.w600)),
               ]),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('UID', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
-                Text('UID003829', style: TextStyle(fontWeight: FontWeight.w600)),
+                TranslatedText('UID', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
+                Text(_uidController.text, style: const TextStyle(fontWeight: FontWeight.w600)),
               ]),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('Recorded by', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
-                Text('ASHA Worker Sunita', style: TextStyle(fontWeight: FontWeight.w600)),
+                TranslatedText('Recorded by', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
+                Text(recordedBy, style: const TextStyle(fontWeight: FontWeight.w600)),
               ]),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('Time', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
-                Text('Just now', style: TextStyle(fontWeight: FontWeight.w600)),
+                TranslatedText('Time', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
+                const TranslatedText('Just now', style: TextStyle(fontWeight: FontWeight.w600)),
               ]),
             ],
           ),
@@ -338,8 +436,9 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
               _weightController.clear();
               _tempController.clear();
               _symptomsController.clear();
+              _patientData = null;
             }),
-            child: const Text('Record Another Patient'),
+            child: const TranslatedText('Record Another Patient'),
           ),
         ),
         const SizedBox(height: 12),
@@ -348,7 +447,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
           height: 52,
           child: OutlinedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Back to Dashboard'),
+            child: const TranslatedText('Back to Dashboard'),
           ),
         ),
       ],

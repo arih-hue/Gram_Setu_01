@@ -20,6 +20,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _ageController = TextEditingController();
   final _villageController = TextEditingController();
   final _blockController = TextEditingController();
+  final _mciController = TextEditingController();
+  final _hospitalController = TextEditingController();
+  final _ashaIdController = TextEditingController();
+  final _panchayatIdController = TextEditingController();
+  final _pharmacistIdController = TextEditingController();
   String? _selectedGender;
   bool _isFetchingLocation = false;
   
@@ -39,13 +44,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic>) {
         _userData = args;
+        Map<String, dynamic>? loc;
+        if (_userData?['location'] is Map) {
+          loc = Map<String, dynamic>.from(_userData?['location'] as Map);
+        }
+        
+        String fullLoc = '';
+        if (_userData?['location'] is String) {
+          fullLoc = _userData?['location'] as String;
+        } else if (loc != null) {
+          fullLoc = loc['fullLocation'] ?? loc['village'] ?? '';
+        }
+
         _nameController.text = _userData?['name'] ?? '';
         _contactController.text = _userData?['phone'] ?? '';
-        _locationController.text = _userData?['location'] ?? '';
+        _locationController.text = fullLoc;
         _emergencyContactController.text = _userData?['emergencyContact'] ?? '';
         _ageController.text = _userData?['age']?.toString() ?? '';
-        _villageController.text = _userData?['village'] ?? '';
-        _blockController.text = _userData?['block'] ?? '';
+        _villageController.text = _userData?['village'] ?? loc?['village'] ?? '';
+        _blockController.text = _userData?['block'] ?? loc?['block'] ?? '';
+        _mciController.text = _userData?['mciNumber'] ?? '';
+        _hospitalController.text = _userData?['hospitalName'] ?? '';
+        _ashaIdController.text = _userData?['ashaId'] ?? '';
+        _panchayatIdController.text = _userData?['panchayatId'] ?? '';
+        _pharmacistIdController.text = _userData?['pharmacistId'] ?? '';
         _selectedGender = _userData?['gender'];
         if (!_genders.contains(_selectedGender)) {
            _selectedGender = null; // reset if invalid
@@ -64,6 +86,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _ageController.dispose();
     _villageController.dispose();
     _blockController.dispose();
+    _mciController.dispose();
+    _hospitalController.dispose();
+    _ashaIdController.dispose();
+    _panchayatIdController.dispose();
+    _pharmacistIdController.dispose();
     super.dispose();
   }
 
@@ -130,23 +157,59 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'mciNumber': _userData?['mciNumber'],
         'ashaId': _userData?['ashaId'],
         'panchayatId': _userData?['panchayatId'],
+        'pharmacistId': _userData?['pharmacistId'],
         'name': name,
         'phone': contact,
       };
 
-      // Patient-specific fields
+      // Role-specific fields in payload
       if (role == 'patient') {
-        payload['location'] = _locationController.text.trim();
+        payload['location'] = {
+           'fullLocation': _locationController.text.trim(),
+           'village': _locationController.text.trim(), // simplified
+        };
         payload['emergencyContact'] = _emergencyContactController.text.trim();
         payload['age'] = _ageController.text.trim();
         payload['gender'] = _selectedGender;
       }
       
-      // Panchayat-specific fields
-      if (role == 'panchayat') {
+      if (role == 'doctor') {
+        payload['mciNumber'] = _mciController.text.trim();
+        payload['hospitalName'] = _hospitalController.text.trim();
+        payload['location'] = {
+          'village': _villageController.text.trim(),
+          'block': _blockController.text.trim()
+        };
+      }
+
+      if (role == 'asha') {
+        payload['ashaId'] = _ashaIdController.text.trim();
         payload['village'] = _villageController.text.trim();
         payload['block'] = _blockController.text.trim();
-        payload['location'] = '${payload['village']}, ${payload['block']}';
+        payload['location'] = {
+          'village': _villageController.text.trim(),
+          'block': _blockController.text.trim()
+        };
+      }
+
+      if (role == 'panchayat') {
+        payload['panchayatId'] = _panchayatIdController.text.trim();
+        payload['village'] = _villageController.text.trim();
+        payload['block'] = _blockController.text.trim();
+        payload['location'] = {
+          'village': _villageController.text.trim(),
+          'block': _blockController.text.trim()
+        };
+      }
+
+      if (role == 'pharmacist') {
+        payload['pharmacistId'] = _pharmacistIdController.text.trim();
+        payload['village'] = _villageController.text.trim();
+        payload['block'] = _blockController.text.trim();
+        payload['location'] = {
+          'village': _villageController.text.trim(),
+          'block': _blockController.text.trim()
+        };
       }
 
       final updatedData = await AuthService.updateProfile(payload);
@@ -163,6 +226,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           case 'doctor': route = '/doctor'; break;
           case 'asha': route = '/asha_worker'; break;
           case 'panchayat': route = '/panchayat'; break;
+          case 'pharmacist': route = '/pharmacist'; break;
           default: route = '/patient'; break;
         }
 
@@ -321,53 +385,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ],
 
-            // Panchayat-only fields
-            if ((_userData?['role'] ?? 'patient') == 'panchayat') ...[
-              // Village Field
-              _buildLabel(
-                theme,
-                'Village',
-                trailing: GestureDetector(
-                  onTap: _isFetchingLocation ? null : _fetchGPSLocation,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_isFetchingLocation)
-                        const SizedBox(
-                          height: 14,
-                          width: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryTeal),
-                        )
-                      else
-                        const Icon(Icons.gps_fixed, size: 16, color: AppColors.primaryTeal),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isFetchingLocation ? 'Fetching...' : 'Fetch GPS',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.primaryTeal,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              _buildTextField(
-                controller: _villageController,
-                hintText: 'Enter village name',
-                icon: Icons.home_outlined,
-              ),
-              const SizedBox(height: 20),
+            // Doctor fields
+            if ((_userData?['role'] ?? 'patient') == 'doctor') ...[
+               _buildLabel(theme, 'MCI Registration Number'),
+               _buildTextField(controller: _mciController, hintText: 'Enter MCI Number', icon: Icons.badge_outlined),
+               const SizedBox(height: 20),
+               _buildLabel(theme, 'Hospital Name'),
+               _buildTextField(controller: _hospitalController, hintText: 'Enter Hospital Name', icon: Icons.apartment_outlined),
+               const SizedBox(height: 20),
+               _buildLabel(theme, 'Village'),
+               _buildTextField(controller: _villageController, hintText: 'Enter Village', icon: Icons.home_outlined),
+               const SizedBox(height: 20),
+               _buildLabel(theme, 'Block'),
+               _buildTextField(controller: _blockController, hintText: 'Enter Block', icon: Icons.map_outlined),
+            ],
 
-              // Block Field
-              _buildLabel(theme, 'Block'),
-              _buildTextField(
-                controller: _blockController,
-                hintText: 'Enter block name',
-                icon: Icons.map_outlined,
-              ),
+            // ASHA fields
+            if ((_userData?['role'] ?? 'patient') == 'asha') ...[
+               _buildLabel(theme, 'ASHA ID'),
+               _buildTextField(controller: _ashaIdController, hintText: 'Enter ASHA ID', icon: Icons.badge_outlined),
+               const SizedBox(height: 20),
+               _buildLabel(theme, 'Assigned Village'),
+               _buildTextField(controller: _villageController, hintText: 'Enter Village', icon: Icons.home_outlined),
+               const SizedBox(height: 20),
+               _buildLabel(theme, 'Assigned Block'),
+               _buildTextField(controller: _blockController, hintText: 'Enter Block', icon: Icons.map_outlined),
+            ],
+
+            // Panchayat fields
+            if ((_userData?['role'] ?? 'patient') == 'panchayat') ...[
+              _buildLabel(theme, 'Panchayat ID'),
+              _buildTextField(controller: _panchayatIdController, hintText: 'Enter Panchayat ID', icon: Icons.badge_outlined),
               const SizedBox(height: 20),
+              _buildLabel(theme, 'Village'),
+              _buildTextField(controller: _villageController, hintText: 'Enter Village', icon: Icons.home_outlined),
+              const SizedBox(height: 20),
+              _buildLabel(theme, 'Block'),
+              _buildTextField(controller: _blockController, hintText: 'Enter Block', icon: Icons.map_outlined),
+            ],
+
+            // Pharmacist fields
+            if ((_userData?['role'] ?? 'patient') == 'pharmacist') ...[
+              _buildLabel(theme, 'Pharmacist ID'),
+              _buildTextField(controller: _pharmacistIdController, hintText: 'Enter Pharmacist ID', icon: Icons.badge_outlined),
+              const SizedBox(height: 20),
+              _buildLabel(theme, 'Village'),
+              _buildTextField(controller: _villageController, hintText: 'Enter Village', icon: Icons.home_outlined),
+              const SizedBox(height: 20),
+              _buildLabel(theme, 'Block'),
+              _buildTextField(controller: _blockController, hintText: 'Enter Block', icon: Icons.map_outlined),
             ],
             const SizedBox(height: 40),
 
@@ -389,10 +455,76 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     : const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: OutlinedButton(
+                onPressed: _isLoading ? null : _showDeleteConfirmation,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.error),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('Delete Account', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+
+  Future<void> _showDeleteConfirmation() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.adaptiveSurface(context),
+        title: const Text('Delete Account?'),
+        content: const Text('This action is permanent and cannot be undone. Are you sure you want to delete your profile?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true), 
+            child: const Text('Delete', style: TextStyle(color: AppColors.error))
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _handleDelete();
+    }
+  }
+
+  Future<void> _handleDelete() async {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final identifiers = {
+        'uid': user['uid'],
+        '_id': user['_id'],
+        'mciNumber': user['mciNumber'],
+        'ashaId': user['ashaId'],
+        'panchayatId': user['panchayatId'],
+        'pharmacistId': user['pharmacistId'],
+      };
+      
+      final success = await AuthService.deleteProfile(identifiers);
+      if (success && mounted) {
+        Provider.of<UserProvider>(context, listen: false).clearUser();
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account deleted successfully')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Widget _buildLabel(ThemeData theme, String text, {Widget? trailing}) {

@@ -26,6 +26,9 @@ import 'package:gram_setu/pages/new_doctor_registration.dart';
 import 'package:gram_setu/pages/new_asha_registration.dart';
 import 'package:gram_setu/pages/new_panchayat_registration.dart';
 import 'package:gram_setu/pages/panchayat_auth_screen.dart';
+import 'package:gram_setu/pages/pharmacist.dart';
+import 'package:gram_setu/pages/pharmacist_auth_screen.dart';
+import 'package:gram_setu/pages/new_pharmacist_registration.dart';
 import 'package:gram_setu/pages/settings_screen.dart';
 import 'package:gram_setu/pages/add_patient_screen.dart';
 import 'package:gram_setu/pages/asha_consultation_screen.dart';
@@ -109,6 +112,9 @@ class GramSetuApp extends StatelessWidget {
           '/view_prescription_search': (context) =>
               const SearchPrescriptionScreen(),
           '/rppg_monitor': (context) => const RPPGMonitorScreen(),
+          '/pharmacist': (context) => const PharmacistDashboard(),
+          '/pharmacist_auth': (context) => const PharmacistAuthScreen(),
+          '/pharmacist_registration': (context) => const NewPharmacistRegistrationScreen(),
         };
 
         final builder = routes[settings.name];

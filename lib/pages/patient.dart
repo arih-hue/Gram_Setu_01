@@ -10,6 +10,7 @@ import '../widgets/gram_app_bar.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/action_card.dart';
 import '../widgets/translated_text.dart';
+import 'vitals_history_screen.dart';
 
 class PatientDashboard extends StatefulWidget {
   const PatientDashboard({super.key});
@@ -22,7 +23,6 @@ class _PatientDashboardState extends State<PatientDashboard> {
   int _currentIndex = 0;
   int _consultationCount = 0;
   int _prescriptionCount = 0;
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -34,7 +34,6 @@ class _PatientDashboardState extends State<PatientDashboard> {
     final user = Provider.of<UserProvider>(context, listen: false).user;
     if (user == null) return;
     
-    setState(() => _isLoading = true);
     try {
       final uid = user['uid'];
       final response = await ApiService.get('/users/uid/$uid');
@@ -45,14 +44,11 @@ class _PatientDashboardState extends State<PatientDashboard> {
       }
     } catch (e) {
       print('Dashboard Data Error: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final user = Provider.of<UserProvider>(context).user;
     final userName = user?['name'] ?? 'User';
     final uid = user?['uid'] ?? 'N/A';
@@ -159,12 +155,25 @@ class _PatientDashboardState extends State<PatientDashboard> {
                   onTap: () => Navigator.pushNamed(context, '/prescriptions'),
                 ),
                 ActionCard(
+                  title: 'View Vitals History',
+                  subtitle: 'Check your rPPG results trend',
+                  icon: Icons.history_outlined,
+                  isDark: true,
+                  accentColor: Colors.amber,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (c) => VitalsHistoryScreen(patientUID: uid),
+                    ),
+                  ),
+                ),
+                ActionCard(
                   title: 'Heart Rate Scan (rPPG)',
                   subtitle: 'Measure vitals using phone camera',
                   icon: Icons.favorite_border,
                   isDark: true,
                   accentColor: Colors.redAccent,
-                  onTap: () => Navigator.pushNamed(context, '/rppg_monitor'),
+                  onTap: () => Navigator.pushNamed(context, '/rppg_monitor', arguments: uid),
                 ),
                 
                 const SizedBox(height: 60),

@@ -16,7 +16,7 @@ const generateToken = (user) => {
 // Register via Custom Credentials (UID, Phone, MCI ID, Password)
 exports.register = async (req, res) => {
   try {
-    const { name, uid, phone, location, gender, age, emergencyContact, password, role, mciNumber, ashaId, panchayatId, village, block, hospitalName } = req.body;
+    const { name, uid, phone, location, gender, age, emergencyContact, password, role, mciNumber, ashaId, panchayatId, pharmacistId, village, block, hospitalName } = req.body;
 
     // Validation
     if (role === 'doctor') {
@@ -32,9 +32,13 @@ exports.register = async (req, res) => {
       if (!panchayatId || !village || !block || !password) {
         return res.status(400).json({ success: false, message: 'Panchayat Members require Panchayat ID, Village, Block, and Password.' });
       }
+    } else if (role === 'pharmacist') {
+      if (!pharmacistId || !name || !phone || !password) {
+        return res.status(400).json({ success: false, message: 'Pharmacists require Pharmacist ID, Name, Phone, and Password.' });
+      }
     } else {
-      if (!name || (!uid && !phone && !mciNumber && !ashaId && !panchayatId) || !password) {
-        console.warn('❌ Registration Missing Fields:', { name, uid, phone, mciNumber, ashaId, panchayatId, password_len: password ? password.length : 0 });
+      if (!name || (!uid && !phone && !mciNumber && !ashaId && !panchayatId && !pharmacistId) || !password) {
+        console.warn('❌ Registration Missing Fields:', { name, uid, phone, mciNumber, ashaId, panchayatId, pharmacistId, password_len: password ? password.length : 0 });
         return res.status(400).json({ success: false, message: 'Please provide required fields (Name, ID, Password).' });
       }
     }
@@ -50,7 +54,8 @@ exports.register = async (req, res) => {
         { phone: phone ? phone.toString().trim() : undefined },
         { mciNumber: mciNumber ? mciNumber.toString().trim() : undefined },
         { ashaId: ashaId ? ashaId.toString().trim() : undefined },
-        { panchayatId: panchayatId ? panchayatId.toString().trim() : undefined }
+        { panchayatId: panchayatId ? panchayatId.toString().trim() : undefined },
+        { pharmacistId: pharmacistId ? pharmacistId.toString().trim() : undefined }
       ].filter(cond => Object.values(cond)[0] !== undefined)
     });
 
@@ -69,6 +74,7 @@ exports.register = async (req, res) => {
       mciNumber,
       ashaId,
       panchayatId,
+      pharmacistId,
       phone,
       hospitalName,
       location: {
@@ -93,6 +99,7 @@ exports.register = async (req, res) => {
       mciNumber: user.mciNumber,
       ashaId: user.ashaId,
       panchayatId: user.panchayatId,
+      pharmacistId: user.pharmacistId,
       phone: user.phone,
       hospitalName: user.hospitalName
     });
@@ -127,7 +134,8 @@ exports.login = async (req, res) => {
         { phone: identifier.toString().trim() },
         { mciNumber: identifier.toString().trim() },
         { ashaId: identifier.toString().trim() },
-        { panchayatId: identifier.toString().trim() }
+        { panchayatId: identifier.toString().trim() },
+        { pharmacistId: identifier.toString().trim() }
       ]
     });
 
@@ -163,10 +171,10 @@ exports.login = async (req, res) => {
 // Update profile information
 exports.updateProfile = async (req, res) => {
   try {
-    const { uid, _id, mciNumber, ashaId, panchayatId, ...updateFields } = req.body;
+    const { uid, _id, mciNumber, ashaId, panchayatId, pharmacistId, ...updateFields } = req.body;
     
     // Find identifier
-    const identifierCondition = _id ? { _id } : uid ? { uid } : mciNumber ? { mciNumber } : ashaId ? { ashaId } : panchayatId ? { panchayatId } : null;
+    const identifierCondition = _id ? { _id } : uid ? { uid } : mciNumber ? { mciNumber } : ashaId ? { ashaId } : panchayatId ? { panchayatId } : pharmacistId ? { pharmacistId } : null;
     
     if (!identifierCondition) {
       return res.status(400).json({ success: false, message: 'Valid ID is required for update.' });
@@ -201,8 +209,8 @@ exports.updateProfile = async (req, res) => {
 // permanently delete user profile
 exports.deleteProfile = async (req, res) => {
   try {
-    const { uid, _id, mciNumber, ashaId, panchayatId } = req.body;
-    const identifierCondition = _id ? { _id } : uid ? { uid } : mciNumber ? { mciNumber } : ashaId ? { ashaId } : panchayatId ? { panchayatId } : null;
+    const { uid, _id, mciNumber, ashaId, panchayatId, pharmacistId } = req.body;
+    const identifierCondition = _id ? { _id } : uid ? { uid } : mciNumber ? { mciNumber } : ashaId ? { ashaId } : panchayatId ? { panchayatId } : pharmacistId ? { pharmacistId } : null;
 
     if (!identifierCondition) {
       return res.status(400).json({ success: false, message: 'Valid ID is required for deletion.' });

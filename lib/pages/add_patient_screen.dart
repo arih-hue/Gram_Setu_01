@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../core/app_colors.dart';
 import '../widgets/gram_app_bar.dart';
 import '../services/location_service.dart';
+import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../core/user_provider.dart';
 
 class AddPatientScreen extends StatefulWidget {
   const AddPatientScreen({super.key});
@@ -59,15 +62,42 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
 
-    final uid = 'UID${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-      _isSubmitted = true;
-      _generatedUid = uid;
-    });
+    try {
+      final currentUser = Provider.of<UserProvider>(context, listen: false).user;
+      final block = currentUser?['location']?['block'] ?? currentUser?['block'] ?? 'Rural';
+      
+      final uid = 'UID${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
+      // Patients registered by ASHA/Panchayat get a default password (their phone number)
+      final password = _phoneController.text.trim(); 
+
+      final result = await AuthService.registerPatient(
+        name: _nameController.text.trim(),
+        uid: uid,
+        phone: _phoneController.text.trim(),
+        village: _villageController.text.trim(),
+        block: block,
+        fullLocation: '${_villageController.text.trim()}, $block',
+        gender: _gender,
+        age: _ageController.text.trim(),
+        emergencyContact: '0000000000', // Default
+        password: password,
+        asWorker: true,
+      );
+
+      if (result != null) {
+        setState(() {
+          _isSubmitted = true;
+          _generatedUid = uid;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Registration Error: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override

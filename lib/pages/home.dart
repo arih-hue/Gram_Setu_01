@@ -146,6 +146,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     AppColors.panchayatPurple,
                     'panchayat',
                   ),
+                  _buildRoleCard(
+                    context,
+                    'Pharmacist',
+                    'Medical Inventory',
+                    Icons.medication,
+                    AppColors.primaryTeal,
+                    'pharmacist',
+                  ),
                 ],
               ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
 
@@ -216,6 +224,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       onTap: () {
         if (role == 'panchayat') {
           Navigator.pushNamed(context, '/panchayat_auth');
+        } else if (role == 'pharmacist') {
+          Navigator.pushNamed(context, '/pharmacist_auth');
         } else {
           Navigator.pushNamed(context, '/login', arguments: role);
         }

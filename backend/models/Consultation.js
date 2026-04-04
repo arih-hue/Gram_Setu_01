@@ -5,6 +5,8 @@ const ConsultationSchema = new mongoose.Schema({
     patientUID: { type: String, required: true },
     patientAge: { type: Number, required: true },
     patientGender: { type: String, required: true },
+    village: { type: String, default: '' },
+    block: { type: String, default: '' },
     reason: { type: String, required: true },
     status: { 
         type: String, 
@@ -18,6 +20,7 @@ const ConsultationSchema = new mongoose.Schema({
         enum: ['patient', 'asha', 'panchayat'], 
         required: true 
     },
+    bookedById: { type: String, default: null }, // ID of the person (Asha worker or Panchayat) who booked
     startedAt: { type: Date, default: null },
     completedAt: { type: Date, default: null },
     durationMinutes: { type: Number, default: 0 },

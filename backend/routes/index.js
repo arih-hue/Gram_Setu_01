@@ -10,6 +10,8 @@ const userRoutes = require('./userRoutes');
 const triageRoutes = require('./triageRoutes');
 const doctorRoutes = require('./doctorRoutes');
 const statsRoutes = require('./statsRoutes');
+const medicineRoutes = require('./medicineRoutes');
+const vitalsRoutes = require('./vitalsRoutes');
 
 // Use Routes
 router.use('/auth', authRoutes);
@@ -21,6 +23,8 @@ router.use('/patient', userRoutes);
 router.use('/doctor', doctorRoutes);
 router.use('/triage', triageRoutes);
 router.use('/stats', statsRoutes);
+router.use('/medicine', medicineRoutes);
+router.use('/vitals', vitalsRoutes);
 
 
 // Optional: Test Route

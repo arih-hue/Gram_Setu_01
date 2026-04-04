@@ -5,15 +5,18 @@ const Consultation = require('../models/Consultation');
 // POST /api/consultation/create
 router.post('/create', async (req, res) => {
     try {
-        const { patientName, patientUID, patientAge, patientGender, reason, bookedBy } = req.body;
+        const { patientName, patientUID, patientAge, patientGender, reason, bookedBy, bookedById, village, block } = req.body;
         
         const newConsultation = new Consultation({
             patientName,
             patientUID,
             patientAge,
             patientGender,
+            village,
+            block,
             reason,
             bookedBy,
+            bookedById,
             status: 'pending'
         });
 

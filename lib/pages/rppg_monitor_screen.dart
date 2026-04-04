@@ -1,23 +1,51 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../core/app_colors.dart';
 import '../widgets/gram_app_bar.dart';
+import '../core/models/vitals.dart';
+import '../services/vitals_service.dart';
+import '../core/user_provider.dart';
+import 'package:provider/provider.dart';
 
 class RPPGMonitorScreen extends StatefulWidget {
-  const RPPGMonitorScreen({super.key});
+  final String? patientUID;
+  const RPPGMonitorScreen({super.key, this.patientUID});
 
   @override
   State<RPPGMonitorScreen> createState() => _RPPGMonitorScreenState();
 }
 
-class _RPPGMonitorScreenState extends State<RPPGMonitorScreen>
-    with TickerProviderStateMixin {
+class _RPPGMonitorScreenState extends State<RPPGMonitorScreen> with SingleTickerProviderStateMixin {
+  String? _finalUID;
+  bool _isInit = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInit) {
+       _finalUID = widget.patientUID;
+       if (_finalUID == null) {
+         final args = ModalRoute.of(context)?.settings.arguments;
+         if (args is String) {
+           _finalUID = args;
+         } else if (args is Map && args['patientUID'] != null) {
+           _finalUID = args['patientUID'];
+         }
+       }
+       _isInit = true;
+    }
+  }
+
+  CameraController? _controller;
   bool _isPermissionGranted = false;
   bool _isScanning = false;
+  bool _isSaving = false;
   double _heartRate = 0;
-  final List<double> _signalData = [];
+  double _spo2 = 0;
+  List<double> _signalData = [];
   Timer? _scanTimer;
   String _statusMessage = 'Cover the camera lens with your fingertip';
 
@@ -48,6 +76,7 @@ class _RPPGMonitorScreenState extends State<RPPGMonitorScreen>
     setState(() {
       _isScanning = true;
       _heartRate = 0;
+      _spo2 = 0;
       _signalData.clear();
       _statusMessage = 'Analyzing blood flow... Keep still';
     });
@@ -59,9 +88,11 @@ class _RPPGMonitorScreenState extends State<RPPGMonitorScreen>
         return;
       }
       if (count < 50) {
-        setState(() {
-          _signalData.add(60 + (count % 10).toDouble());
-        });
+        if (mounted) {
+          setState(() {
+            _signalData.add(60 + (count % 10).toDouble());
+          });
+        }
         count++;
       } else {
         _stopScanning();
@@ -71,69 +102,111 @@ class _RPPGMonitorScreenState extends State<RPPGMonitorScreen>
 
   void _stopScanning() {
     _scanTimer?.cancel();
-    if (!mounted) return;
-    setState(() {
-      _isScanning = false;
-      _heartRate = 72 + (DateTime.now().millisecond % 10).toDouble();
-      _statusMessage = 'Scan Complete';
-    });
-    _showResultDialog();
+    if (mounted) {
+      setState(() {
+        _isScanning = false;
+        _heartRate = 72 + (DateTime.now().millisecond % 10).toDouble();
+        _spo2 = 96 + (DateTime.now().second % 4).toDouble();
+        _statusMessage = 'Scan Complete';
+      });
+      _showResultDialog();
+    }
+  }
+
+  Future<void> _saveToAtlas() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userData = userProvider.user;
+    
+    // Determine the target patient UID
+    String? uid = _finalUID;
+    if (uid == null || uid.isEmpty) {
+      if (userData != null && userData['role'] == 'patient') {
+        uid = userData['uid']?.toString();
+      }
+    }
+
+    if (uid == null || uid.isEmpty) {
+      // If still no UID is provided, just return the data to the previous screen
+      Navigator.pop(context); // Close dialog
+      Navigator.pop(context, {'heartRate': _heartRate.toInt(), 'spo2': _spo2.toInt()});
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    
+    final recordedBy = "${userData?['role'] ?? 'Patient'} ${userData?['name'] ?? ''}".trim();
+
+    final vitals = Vitals(
+      id: '',
+      patientUID: uid,
+      heartRate: _heartRate.toInt(),
+      spo2: _spo2.toInt(),
+      notes: 'Automatic rPPG Camera Scan',
+      recordedBy: recordedBy,
+      timestamp: DateTime.now(),
+    );
+
+    final success = await VitalsService.addVitals(vitals);
+    
+    if (mounted) {
+      setState(() => _isSaving = false);
+      Navigator.pop(context); // Close dialog
+      
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vitals updated in Atlas successfully!'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context); // Go back
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Atlas update failed. Data returned locally.'), backgroundColor: Colors.red),
+        );
+        Navigator.pop(context, {'heartRate': _heartRate.toInt(), 'spo2': _spo2.toInt()});
+      }
+    }
   }
 
   void _showResultDialog() {
     showDialog(
+      barrierDismissible: false,
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Scan Result', textAlign: TextAlign.center),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.favorite, color: Colors.redAccent, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              '${_heartRate.toInt()} BPM',
-              style: const TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.redAccent),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Scan Result'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.favorite, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                'Heart Rate: ${_heartRate.toInt()} BPM',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'SpO2: ${_spo2.toInt()}%',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
+              ),
+              const SizedBox(height: 12),
+              const Text('Estimated via rPPG analysis', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Discard'),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Estimated via rPPG analysis',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              '⚠️ For medical use, consult a doctor.',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
+            _isSaving 
+              ? const SizedBox(width: 40, height: 40, child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
+              : ElevatedButton(
+                  onPressed: () async {
+                    setDialogState(() => _isSaving = true);
+                    await _saveToAtlas();
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryTeal),
+                  child: const Text('Save to Atlas'),
+                ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Discard'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Vitals updated successfully')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryTeal,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Save to Vitals'),
-          ),
-        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'vitals_history_screen.dart';
 import '../widgets/translated_text.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -64,6 +65,36 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
     } finally {
       if (mounted) setState(() {});
     }
+  }
+
+  void _showSearchVitalsDialog() {
+    final TextEditingController uidCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const TranslatedText('Search Patient Vitals'),
+        content: TextField(
+          controller: uidCtrl,
+          decoration: const InputDecoration(hintText: 'Enter Patient UID'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const TranslatedText('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              final uid = uidCtrl.text.trim();
+              if (uid.isNotEmpty) {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (c) => VitalsHistoryScreen(patientUID: uid)),
+                );
+              }
+            },
+            child: const TranslatedText('Search'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -184,6 +215,15 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                   accentColor: AppColors.panchayatPurple,
                   onTap: () => Navigator.pushNamed(context, '/view_prescription_search'),
                 ).animate().fadeIn(delay: 350.ms),
+
+                ActionCard(
+                  title: 'Patient Vitals History',
+                  subtitle: 'Search vitals by Patient UID',
+                  icon: Icons.health_and_safety_outlined,
+                  isDark: true,
+                  accentColor: Colors.orange,
+                  onTap: _showSearchVitalsDialog,
+                ).animate().fadeIn(delay: 380.ms),
 
                 const SizedBox(height: 32),
 

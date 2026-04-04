@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema({
   mciNumber: { type: String, unique: true, sparse: true }, 
   ashaId: { type: String, unique: true, sparse: true },   
   panchayatId: { type: String, unique: true, sparse: true },
+  pharmacistId: { type: String, unique: true, sparse: true },
   email: { type: String, unique: true, sparse: true },
   password: { type: String }, 
   name: { type: String, default: "User" },
@@ -18,7 +19,7 @@ const UserSchema = new mongoose.Schema({
   age: { type: String },      
   emergencyContact: { type: String }, 
   gender: { type: String, enum: ['Male', 'Female', 'Others'] },
-  role: { type: String, enum: ['patient', 'doctor', 'admin', 'asha', 'panchayat'], default: 'patient' },
+  role: { type: String, enum: ['patient', 'doctor', 'admin', 'asha', 'panchayat', 'pharmacist'], default: 'patient' },
   createdAt: { type: Date, default: Date.now }
 });
 
