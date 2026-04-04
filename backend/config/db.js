@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
     try {
         const uri = process.env.MONGO_URI || 'mongodb+srv://opg7386_db_user:tmZTuN7LUxxYGgbP@cluster0.h8hfawa.mongodb.net/gram_setu?retryWrites=true&w=majority';
-        const conn = await mongoose.connect(uri);
+        const conn = await mongoose.connect(uri, {
+            serverSelectionTimeoutMS: 5000 // Error out faster instead of hanging
+        });
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
         console.error(`❌ Error connecting to MongoDB: ${error.message}`);
@@ -12,7 +14,7 @@ const connectDB = async () => {
         console.log('2. Check if your network blocks outbound connection on port 27017 (Common in university/office Wi-Fi).');
         console.log('3. Solution: Use a mobile hotspot or a VPN.');
         console.log('4. Ensure your MONGO_URI in .env is correct and has no extra spaces.\n');
-        process.exit(1);
+        // process.exit(1); // REMOVED: Keep server running so you can see descriptive errors
     }
 };
 
