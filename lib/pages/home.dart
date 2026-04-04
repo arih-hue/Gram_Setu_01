@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/translated_text.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
@@ -35,8 +36,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Gram Setu',
+                      TranslatedText('Gram Setu',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -44,8 +44,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         ),
                       ).animate().fadeIn().slideX(begin: -0.2),
                       const SizedBox(height: 8),
-                      Text(
-                        'Healthcare & Rural Network',
+                      TranslatedText('Healthcare & Rural Network',
                         style: TextStyle(
                           fontSize: 16,
                           color: theme.textTheme.bodyMedium?.color,
@@ -181,8 +180,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     children: [
                       const Icon(Icons.emergency_share, color: Colors.white, size: 24),
                       const SizedBox(width: 12),
-                      Text(
-                        'EMERGENCY SOS',
+                      TranslatedText('EMERGENCY SOS',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,

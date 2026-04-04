@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'translated_text.dart';
 
 class ActionCard extends StatelessWidget {
   final String title;
@@ -63,7 +64,7 @@ class ActionCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      TranslatedText(
                         title,
                         style: TextStyle(
                           fontSize: 15,
@@ -72,7 +73,7 @@ class ActionCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
+                      TranslatedText(
                         subtitle,
                         style: TextStyle(fontSize: 13, color: subColor),
                       ),

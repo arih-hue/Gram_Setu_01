@@ -21,7 +21,7 @@ class TranslationService {
           'input': text,
           'source_language_code': sourceLanguage,
           'target_language_code': targetLanguage,
-          'speaker_gender': 'MALE', // Optional but common in Sarvam
+          'speaker_gender': 'Male', // Sarvam API is strict about Title Case
           'mode': 'formal', // Optional
         }),
       );

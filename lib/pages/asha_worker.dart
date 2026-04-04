@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/translated_text.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/user_provider.dart';

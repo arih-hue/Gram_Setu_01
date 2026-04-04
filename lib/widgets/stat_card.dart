@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'translated_text.dart';
 import '../core/app_colors.dart';
 
 class StatCard extends StatelessWidget {
@@ -38,7 +39,7 @@ class StatCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                TranslatedText(
                   title,
                   style: TextStyle(
                     fontSize: 12,

@@ -3,5 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/backend" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/rppg_service/rPPG-Toolbox" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/rppg_service/rppg_toolbox_repo" vcs="Git" />
   </component>
 </project>

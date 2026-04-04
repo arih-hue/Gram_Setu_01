@@ -9,6 +9,7 @@ import '../services/api_service.dart';
 import '../widgets/gram_app_bar.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/action_card.dart';
+import '../widgets/translated_text.dart';
 
 class PatientDashboard extends StatefulWidget {
   const PatientDashboard({super.key});
@@ -78,12 +79,12 @@ class _PatientDashboardState extends State<PatientDashboard> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        TranslatedText(
                           'Hello, ${userName.split(' ').first} 👋',
                           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context)),
                         ),
                         const SizedBox(height: 4),
-                        Text('How are you feeling today?', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
+                        TranslatedText('How are you feeling today?', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
                       ],
                     ),
                     Container(
@@ -99,7 +100,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text('Your UID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context))),
+                          TranslatedText('Your UID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context))),
                           Text(uid, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryTeal)),
                         ],
                       ),
@@ -139,7 +140,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
                 const SizedBox(height: 32),
 
                 // Quick Actions
-                Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
+                TranslatedText('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
                 const SizedBox(height: 16),
                 ActionCard(
                   title: 'Book Consultation',
@@ -233,7 +234,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
             Icon(icon, color: isSelected ? AppColors.primaryTeal : AppColors.adaptiveTextSecondary(context), size: 24),
             if (isSelected) ...[
               const SizedBox(width: 8),
-              Text(label, style: const TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.bold, fontSize: 13)),
+              TranslatedText(label, style: const TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.bold, fontSize: 13)),
             ],
           ],
         ),
