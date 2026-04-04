@@ -4,6 +4,7 @@ import '../core/app_colors.dart';
 import '../core/theme_provider.dart';
 import '../core/user_provider.dart';
 import '../core/emergency_util.dart';
+import '../core/language_provider.dart';
 
 class GramAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? roleLabel;
@@ -149,6 +150,24 @@ class GramAppBar extends StatelessWidget implements PreferredSizeWidget {
             onPressed: onLogoutTap,
             tooltip: 'Logout',
           ),
+        _buildLanguageSelector(context),
+      ],
+    );
+  }
+
+  Widget _buildLanguageSelector(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final theme = Theme.of(context);
+    
+    return PopupMenuButton<String>(
+      onSelected: languageProvider.setLanguage,
+      icon: Icon(Icons.translate, size: 20, color: theme.appBarTheme.iconTheme?.color),
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'en-IN', child: Text('English')),
+        const PopupMenuItem(value: 'hi-IN', child: Text('हिन्दी (Hindi)')),
+        const PopupMenuItem(value: 'ta-IN', child: Text('தமிழ் (Tamil)')),
+        const PopupMenuItem(value: 'te-IN', child: Text('తెలుగు (Telugu)')),
+        const PopupMenuItem(value: 'bn-IN', child: Text('বাংলা (Bengali)')),
       ],
     );
   }

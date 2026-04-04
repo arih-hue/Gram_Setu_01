@@ -6,11 +6,9 @@ const UserSchema = new mongoose.Schema({
   mciNumber: { type: String, unique: true, sparse: true }, 
   ashaId: { type: String, unique: true, sparse: true },   
   panchayatId: { type: String, unique: true, sparse: true },
-  googleId: { type: String, unique: true, sparse: true }, 
   email: { type: String, unique: true, sparse: true },
   password: { type: String }, 
   name: { type: String, default: "User" },
-  picture: { type: String },
   location: {
     village: { type: String, default: '' },
     block: { type: String, default: '' },

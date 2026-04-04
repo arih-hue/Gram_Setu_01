@@ -1,11 +1,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require('google-auth-library');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'gram_setu_secret_key_123!';
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Internal Token Generation
 const generateToken = (user) => {
@@ -160,47 +157,6 @@ exports.login = async (req, res) => {
   } catch (error) {
     console.error('Login Error:', error);
     res.status(500).json({ success: false, message: 'Server error during login', error: error.message });
-  }
-};
-
-// Google Login (From current server.js implementation)
-exports.googleLogin = async (req, res) => {
-  try {
-    const { idToken, role } = req.body;
-
-    // Verify Google ID Token
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    const { sub: googleId, email, name, picture } = payload;
-    
-    // Check if User already exists in MongoDB
-    let user = await User.findOne({ googleId });
-
-    if (!user) {
-      // Create new user if not found
-      user = await User.create({
-        googleId,
-        email,
-        name,
-        picture,
-        role: role || 'patient',
-      });
-      console.log('✨ New User Registered via Google:', email);
-    } else {
-      console.log('🔑 Returning User Logged In via Google:', email);
-    }
-    
-    // Generate Internal JWT for Flutter
-    const token = generateToken(user);
-    
-    res.status(200).json({ success: true, token, user });
-  } catch (error) {
-    console.error('Auth Error:', error.message);
-    res.status(401).json({ success: false, message: 'Invalid or expired Google token' });
   }
 };
 

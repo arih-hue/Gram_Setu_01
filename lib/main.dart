@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:gram_setu/core/theme.dart';
 import 'package:gram_setu/core/theme_provider.dart';
 import 'package:gram_setu/core/user_provider.dart';
+import 'package:gram_setu/core/language_provider.dart';
 
 import 'package:gram_setu/pages/home.dart';
 import 'package:gram_setu/pages/splash.dart';
@@ -37,6 +38,7 @@ import 'package:gram_setu/pages/accepted_consultations_screen.dart';
 import 'package:gram_setu/pages/search_patient_screen.dart';
 import 'package:gram_setu/pages/leaderboard_screen.dart';
 import 'package:gram_setu/pages/search_prescription_screen.dart';
+import 'package:gram_setu/pages/rppg_monitor_screen.dart';
 
 void main() {
   runApp(
@@ -44,6 +46,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
       child: const GramSetuApp(),
     ),
@@ -81,23 +84,31 @@ class GramSetuApp extends StatelessWidget {
           '/health_assistant': (context) => const HealthAssistantScreen(),
           '/profile': (context) => const ProfileDashboard(),
           '/vitals_recorder': (context) => const VitalsRecorderScreen(),
-          '/patient_registration': (context) => const NewPatientRegistrationScreen(),
-          '/doctor_registration': (context) => const NewDoctorRegistrationScreen(),
+          '/patient_registration': (context) =>
+              const NewPatientRegistrationScreen(),
+          '/doctor_registration': (context) =>
+              const NewDoctorRegistrationScreen(),
           '/asha_registration': (context) => const NewAshaRegistrationScreen(),
-          '/panchayat_registration': (context) => const NewPanchayatRegistrationScreen(),
+          '/panchayat_registration': (context) =>
+              const NewPanchayatRegistrationScreen(),
           '/panchayat_auth': (context) => const PanchayatAuthScreen(),
           '/settings': (context) => const SettingsScreen(),
           '/add_patient': (context) => const AddPatientScreen(),
           '/asha_consultation': (context) => const AshaConsultationScreen(),
           '/health_awareness': (context) => const HealthAwarenessScreen(),
           '/edit_profile': (context) => const EditProfileScreen(),
-          '/pending_consultations': (context) => const PendingConsultationsScreen(),
+          '/pending_consultations': (context) =>
+              const PendingConsultationsScreen(),
           '/panchayat_records': (context) => const PanchayatRecordsScreen(),
-          '/consultation_requests': (context) => const ConsultationRequestsScreen(),
-          '/accepted_consultations': (context) => const AcceptedConsultationsScreen(),
+          '/consultation_requests': (context) =>
+              const ConsultationRequestsScreen(),
+          '/accepted_consultations': (context) =>
+              const AcceptedConsultationsScreen(),
           '/search_patient': (context) => const SearchPatientScreen(),
           '/leaderboard': (context) => const LeaderboardScreen(),
-          '/view_prescription_search': (context) => const SearchPrescriptionScreen(),
+          '/view_prescription_search': (context) =>
+              const SearchPrescriptionScreen(),
+          '/rppg_monitor': (context) => const RPPGMonitorScreen(),
         };
 
         final builder = routes[settings.name];

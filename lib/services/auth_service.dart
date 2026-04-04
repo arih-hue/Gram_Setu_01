@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/constants.dart';
 
 class AuthService {
-  static final _googleSignIn = GoogleSignIn();
   static const _storage = FlutterSecureStorage();
 
   static String get _baseUrl => AppConstants.baseUrl;
@@ -209,7 +207,6 @@ class AuthService {
   }
 
   static Future<void> signOut() async {
-    await _googleSignIn.signOut();
     await _storage.delete(key: 'jwt_token');
   }
 

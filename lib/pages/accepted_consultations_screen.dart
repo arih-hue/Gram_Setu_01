@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import '../core/user_provider.dart';
 import '../widgets/gram_app_bar.dart';
 import 'write_prescription_screen.dart';
+import 'video_call_screen.dart';
 
 class AcceptedConsultationsScreen extends StatefulWidget {
   const AcceptedConsultationsScreen({super.key});
@@ -160,8 +161,11 @@ class _AcceptedConsultationsScreenState extends State<AcceptedConsultationsScree
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Video Call feature coming soon!')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VideoCallScreen(consultation: item),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.videocam_outlined, size: 18),

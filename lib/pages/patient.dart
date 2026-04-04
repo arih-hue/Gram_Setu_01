@@ -157,6 +157,14 @@ class _PatientDashboardState extends State<PatientDashboard> {
                   accentColor: AppColors.softBlue,
                   onTap: () => Navigator.pushNamed(context, '/prescriptions'),
                 ),
+                ActionCard(
+                  title: 'Heart Rate Scan (rPPG)',
+                  subtitle: 'Measure vitals using phone camera',
+                  icon: Icons.favorite_border,
+                  isDark: true,
+                  accentColor: Colors.redAccent,
+                  onTap: () => Navigator.pushNamed(context, '/rppg_monitor'),
+                ),
                 
                 const SizedBox(height: 60),
               ],
