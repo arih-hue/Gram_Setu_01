@@ -23,14 +23,33 @@ app.use((req, res, next) => {
 });
 
 // Load Config from .env
+const os = require('os');
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'gram_setu_secret_key_123!';
+
 // 2. All API Routes (Centralized in routes/index.js)
 app.use('/api', apiRoutes);
 
 // Hello World Route for testing
 app.get('/', (req, res) => res.send('Gram Setu Backend is Running!'));
 
+// Function to get local network IP
+const getLocalIp = () => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const entry of interfaces[name]) {
+      if (entry.family === 'IPv4' && !entry.internal) {
+        return entry.address;
+      }
+    }
+  }
+  return 'localhost';
+};
+
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
+  const localIp = getLocalIp();
+  console.log(`\n🚀 Backend is LIVE!`);
+  console.log(`🏠 Local:   http://localhost:${PORT}`);
+  console.log(`🌐 Network: http://${localIp}:${PORT}`);
+  console.log(`\n(Point your AppConstants.baseUrl to the Network URL if using a physical device)\n`);
 });

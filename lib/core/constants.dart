@@ -6,22 +6,34 @@ class AppConstants {
   AppConstants._(); // prevent instantiation
 
   // ── API ────────────────────────────────────────────────────────────────────
-  /// 1. Set this to true if you want to connect to a friend's backend.
-  static const bool useFriendBackend = true; 
+  /// 1. If true, all systems (emulators, other PCs, phones) connect to the host below.
+  static const bool usePhysicalIp = true; 
   
-  /// 2. Put your friend's Local IP here (found via `ipconfig` on their PC).
-  static const String _friendIp = '192.168.53.234'; // <--- UPDATED: Friend's IP
+  /// 2. The LAN IP of the computer running the backend.
+  static const String _hostIp = '192.168.53.234'; 
 
-  /// Base URL is resolved automatically:
+  /// Base URL is resolved automatically based on the platform:
   static String get baseUrl {
-    if (useFriendBackend) return 'http://$_friendIp:3000';
+    if (usePhysicalIp) return 'http://$_hostIp:3000';
     
     if (kIsWeb) {
-      final host = Uri.base.host;
+      // Browsers use the same host they are served from.
+      final host = Uri.base.host.isEmpty ? 'localhost' : Uri.base.host;
       return 'http://$host:3000';
     }
-    if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    return 'http://$_friendIp:3000';
+    
+    if (Platform.isAndroid) {
+      // Official Android Emulator uses 10.0.2.2 for host loopback.
+      return 'http://10.0.2.2:3000';
+    }
+    
+    if (Platform.isIOS || Platform.isMacOS) {
+      // iOS simulators share the host network stack.
+      return 'http://localhost:3000';
+    }
+
+    // Default fallback for physical devices or other platforms.
+    return 'http://$_hostIp:3000';
   }
 
   // ── Timeouts ───────────────────────────────────────────────────────────────
