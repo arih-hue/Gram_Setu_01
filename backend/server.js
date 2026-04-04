@@ -11,9 +11,8 @@ const app = express();
 connectDB();
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
-// Allow all origins, methods, and headers for development
+// Use standard CORS middleware (handles all routes and OPTIONS automatically)
 app.use(cors());
-app.options('*', cors());
 
 app.use(express.json());
 

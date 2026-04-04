@@ -6,25 +6,22 @@ class AppConstants {
   AppConstants._(); // prevent instantiation
 
   // ── API ────────────────────────────────────────────────────────────────────
-  /// Your laptop's LAN IP for physical device testing (e.g., 192.168.1.x).
-  /// Run `ipconfig` on Windows to find it.
-  static const String _lanIp = '192.168.52.31';
+  /// 1. Set this to true if you want to connect to a friend's backend.
+  static const bool useFriendBackend = false; 
+  
+  /// 2. Put your friend's Local IP here (found via `ipconfig` on their PC).
+  static const String _friendIp = '192.168.52.31'; // <--- CHANGE THIS
 
-  /// Base URL is resolved automatically per platform:
-  ///   • Flutter Web          → http://<host>:3000 (auto-detects host)
-  ///   • Android Emulator     → http://10.0.2.2:3000
-  ///   • Physical Device      → http://<_lanIp>:3000
+  /// Base URL is resolved automatically:
   static String get baseUrl {
+    if (useFriendBackend) return 'http://$_friendIp:3000';
+    
     if (kIsWeb) {
-      // Auto-detects the host the Flutter web app was served from.
-      // Since the app and backend run on the same machine, this always points
-      // to the right server — whether accessed from localhost OR via LAN IP.
-      final host = Uri.base.host; // e.g. "localhost" or "192.168.52.31"
+      final host = Uri.base.host;
       return 'http://$host:3000';
     }
-    // Note: Platform.isAndroid will throw on web, but we handle kIsWeb above.
     if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    return 'http://$_lanIp:3000';
+    return 'http://$_friendIp:3000';
   }
 
   // ── Timeouts ───────────────────────────────────────────────────────────────
