@@ -86,9 +86,9 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.06),
+              color: AppColors.success.withOpacity(0.06),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+              border: Border.all(color: AppColors.success.withOpacity(0.3)),
             ),
             child: Row(
               children: [
@@ -284,7 +284,7 @@ class _VitalsRecorderScreenState extends State<VitalsRecorderScreen> {
         const SizedBox(height: 60),
         Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), shape: BoxShape.circle),
+          decoration: BoxDecoration(color: AppColors.success.withOpacity(0.1), shape: BoxShape.circle),
           child: const Icon(Icons.check_circle, color: AppColors.success, size: 64),
         ),
         const SizedBox(height: 24),

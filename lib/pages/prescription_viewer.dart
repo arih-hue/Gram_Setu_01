@@ -62,7 +62,7 @@ class _PrescriptionViewerState extends State<PrescriptionViewer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.adaptiveBackground(context),
-      appBar: const GramAppBar(roleLabel: 'Medical History', showBack: true),
+      appBar: const GramAppBar(roleLabel: 'Prescription History', showBack: true),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
@@ -90,8 +90,8 @@ class _PrescriptionViewerState extends State<PrescriptionViewer> {
             children: [
               Icon(Icons.description_outlined, size: 64, color: AppColors.adaptiveTextSecondary(context)),
               const SizedBox(height: 16),
-              const Text('No prescriptions found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text('Medical history will appear here.', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
+              const Text('No records found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Medical prescriptions will appear here after sessions.', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
             ],
           ),
         ),
@@ -106,101 +106,104 @@ class _PrescriptionViewerState extends State<PrescriptionViewer> {
     } catch (e) {
       date = DateTime.now();
     }
-    final formattedDate = DateFormat('dd MMM yyyy, hh:mm a').format(date);
+    // Date Format: DD/MM/YYYY
+    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
     final medicines = rx['medicines'] as List<dynamic>? ?? [];
     
+    // Title is Reason / Problem
     String reason = 'General Consultation';
     if (rx['consultationId'] != null) {
       if (rx['consultationId'] is Map) {
         reason = rx['consultationId']['reason'] ?? 'General Consultation';
       } else {
-        reason = 'Consultation Record';
+        reason = 'Prescription for: Consultation';
       }
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.adaptiveSurface(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.adaptiveBorder(context)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 6))
         ]
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      reason,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
+                      'Prescription for: $reason',
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       formattedDate,
-                      style: TextStyle(fontSize: 11, color: AppColors.adaptiveTextSecondary(context)),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context)),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.verified, color: AppColors.doctorGreen, size: 20),
+              const Icon(Icons.verified, color: AppColors.doctorGreen, size: 22),
             ],
           ),
-          const Divider(height: 24, thickness: 1),
+          const Divider(height: 32, thickness: 1.2),
           
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('PATIENT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context))),
-                  Text(rx['patientName'] ?? 'No Name', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text('PATIENT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context), letterSpacing: 0.5)),
+                  Text(rx['patientName'] ?? 'No Name', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 ],
               ),
-              const Spacer(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('DOCTOR', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context))),
-                  Text('Dr. ${rx['doctorName'] ?? 'Doctor'}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text('DIAGNOSED BY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context), letterSpacing: 0.5)),
+                  Text('Dr. ${rx['doctorName'] ?? 'Physician'}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           
-          Text('PRESCRIBED MEDICINES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context))),
-          const SizedBox(height: 10),
+          Text('PRESCRIBED MEDICINES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context), letterSpacing: 1)),
+          const SizedBox(height: 12),
           
           ...medicines.map((m) => Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.adaptiveBackground(context).withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.adaptiveBorder(context).withValues(alpha: 0.5)),
+              color: AppColors.adaptiveBackground(context).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.adaptiveBorder(context).withOpacity(0.4)),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(color: AppColors.primaryTeal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                  child: const Icon(Icons.medication, size: 16, color: AppColors.primaryTeal),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: AppColors.primaryTeal.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.medication_rounded, size: 18, color: AppColors.primaryTeal),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(m['medicineName'] ?? 'Medicine', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      // Medicine name BOLD
+                      Text(m['medicineName'] ?? 'Medicine', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 0.2)),
+                      const SizedBox(height: 2),
                       Text('Duration: ${m['duration'] ?? 'N/A'} • Timing: ${m['timing'] ?? 'N/A'}', style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
                     ],
                   ),
@@ -209,32 +212,23 @@ class _PrescriptionViewerState extends State<PrescriptionViewer> {
             ),
           )),
 
-          if (rx['extraNote'] != null && rx['extraNote'].toString().isNotEmpty) ...[
-            const SizedBox(height: 12),
+          if (rx['extraNote'] != null && rx['extraNote'].toString().trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
+                color: Colors.amber.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.amber.withOpacity(0.3)),
               ),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.sticky_note_2_outlined, size: 16, color: Colors.amber),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('DOCTOR\'S REMARKS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.amber)),
-                        const SizedBox(height: 4),
-                        Text(
-                          rx['extraNote'],
-                          style: TextStyle(fontSize: 13, color: AppColors.adaptiveTextPrimary(context), height: 1.4),
-                        ),
-                      ],
-                    ),
+                  const Text('DOCTOR\'S ADVICE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.amber, letterSpacing: 1)),
+                  const SizedBox(height: 6),
+                  Text(
+                    rx['extraNote'],
+                    style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextPrimary(context), height: 1.5, fontStyle: FontStyle.italic),
                   ),
                 ],
               ),

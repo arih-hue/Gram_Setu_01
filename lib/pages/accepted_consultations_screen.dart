@@ -35,7 +35,7 @@ class _AcceptedConsultationsScreenState extends State<AcceptedConsultationsScree
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          _consultations = data['consultations'];
+          _consultations = (data['consultations'] as List? ?? []);
           _isLoading = false;
         });
       } else {
@@ -46,6 +46,26 @@ class _AcceptedConsultationsScreenState extends State<AcceptedConsultationsScree
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _startConsultation(String id) async {
+    try {
+      final response = await ApiService.patch('/consultation/start/$id', {});
+      if (response.statusCode == 200) {
+        _fetchAccepted();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session started! You can now join the call.'), backgroundColor: AppColors.success),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error starting session: $e')),
         );
       }
     }
@@ -134,49 +154,65 @@ class _AcceptedConsultationsScreenState extends State<AcceptedConsultationsScree
             style: const TextStyle(fontSize: 14),
           ),
           const Divider(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Coming Soon')),
-                    );
-                  },
-                  icon: const Icon(Icons.videocam_outlined, size: 18),
-                  label: const Text('Video Call'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          if (item['status'] == 'active')
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Video Call feature coming soon!')),
+                      );
+                    },
+                    icon: const Icon(Icons.videocam_outlined, size: 18),
+                    label: const Text('Join Call'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => WritePrescriptionScreen(consultation: item),
-                      ),
-                    );
-                    if (result == true) {
-                      _fetchAccepted();
-                    }
-                  },
-                  icon: const Icon(Icons.edit_note, size: 18),
-                  label: const Text('Prescription'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryTeal,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => WritePrescriptionScreen(consultation: item),
+                        ),
+                      );
+                      if (result == true) {
+                        _fetchAccepted();
+                      }
+                    },
+                    icon: const Icon(Icons.edit_note, size: 18),
+                    label: const Text('Prescribe'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryTeal,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
                 ),
+              ],
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton.icon(
+                onPressed: () => _startConsultation(item['_id']),
+                icon: const Icon(Icons.play_arrow_outlined, color: Colors.white),
+                label: const Text('Start Consultation Session', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.doctorGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );

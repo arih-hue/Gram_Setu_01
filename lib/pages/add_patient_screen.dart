@@ -132,7 +132,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                       decoration: BoxDecoration(
                         color: theme.cardTheme.color,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.15)),
+                        border: Border.all(color: theme.dividerColor.withOpacity(0.15)),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -247,7 +247,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
         const SizedBox(height: 40),
         Container(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), shape: BoxShape.circle),
+          decoration: BoxDecoration(color: AppColors.success.withOpacity(0.1), shape: BoxShape.circle),
           child: const Icon(Icons.check_circle, color: AppColors.success, size: 64),
         ),
         const SizedBox(height: 24),
@@ -261,7 +261,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
           decoration: BoxDecoration(
             color: theme.cardTheme.color,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
           ),
           child: Column(
             children: [
@@ -277,7 +277,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryTeal.withValues(alpha: 0.1),
+                      color: AppColors.primaryTeal.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

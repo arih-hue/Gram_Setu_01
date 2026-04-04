@@ -75,7 +75,7 @@ class HealthHistoryScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.camera_front, color: Colors.white, size: 28),
@@ -208,7 +208,7 @@ class HealthHistoryScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.doctorGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: AppColors.doctorGreen.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.medical_services, color: AppColors.doctorGreen, size: 18),
           ),
           const SizedBox(width: 10),
@@ -242,9 +242,9 @@ class _VitalTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
+        color: color.withOpacity(0.06),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +264,7 @@ class _VitalTile extends StatelessWidget {
               const SizedBox(width: 2),
               Padding(
                 padding: const EdgeInsets.only(bottom: 3),
-                child: Text(unit, style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.7))),
+                child: Text(unit, style: TextStyle(fontSize: 11, color: color.withOpacity(0.7))),
               ),
             ],
           ),

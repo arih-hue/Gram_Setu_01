@@ -117,7 +117,7 @@ class GramSetuTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.textHintLight.withValues(alpha: 0.2)),
+          borderSide: BorderSide(color: AppColors.textHintLight.withOpacity(0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -131,10 +131,10 @@ class GramSetuTheme {
       cardTheme: CardThemeData(
         color: AppColors.surfaceLight,
         elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.05),
+        shadowColor: Colors.black.withOpacity(0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.textHintLight.withValues(alpha: 0.1)),
+          side: BorderSide(color: AppColors.textHintLight.withOpacity(0.1)),
         ),
         margin: const EdgeInsets.only(bottom: 12),
       ),

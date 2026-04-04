@@ -209,7 +209,7 @@ class _HealthAssistantScreenState extends State<HealthAssistantScreen> {
         children: [
           if (msg.isBot) ...[
             CircleAvatar(
-              backgroundColor: msg.isDisclaimer ? AppColors.warning.withValues(alpha: 0.1) : const Color(0xFFD1FAE5),
+              backgroundColor: msg.isDisclaimer ? AppColors.warning.withOpacity(0.1) : const Color(0xFFD1FAE5),
               radius: 14,
               child: Icon(
                 msg.isDisclaimer ? Icons.warning_amber : Icons.health_and_safety,
@@ -224,7 +224,7 @@ class _HealthAssistantScreenState extends State<HealthAssistantScreen> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: msg.isBot
-                    ? (msg.isDisclaimer ? AppColors.warning.withValues(alpha: 0.08) : AppColors.adaptiveSurface(context))
+                    ? (msg.isDisclaimer ? AppColors.warning.withOpacity(0.08) : AppColors.adaptiveSurface(context))
                     : AppColors.primaryTeal,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(14),
@@ -232,7 +232,7 @@ class _HealthAssistantScreenState extends State<HealthAssistantScreen> {
                   bottomLeft: Radius.circular(msg.isBot ? 4 : 14),
                   bottomRight: Radius.circular(msg.isBot ? 14 : 4),
                 ),
-                border: msg.isBot ? Border.all(color: msg.isDisclaimer ? AppColors.warning.withValues(alpha: 0.3) : AppColors.adaptiveBorder(context)) : null,
+                border: msg.isBot ? Border.all(color: msg.isDisclaimer ? AppColors.warning.withOpacity(0.3) : AppColors.adaptiveBorder(context)) : null,
               ),
               child: Text(
                 msg.text,

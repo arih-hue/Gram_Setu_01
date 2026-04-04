@@ -135,7 +135,7 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.adaptiveBorder(context)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -151,7 +151,7 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryTeal.withValues(alpha: 0.1),
+                  color: AppColors.primaryTeal.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

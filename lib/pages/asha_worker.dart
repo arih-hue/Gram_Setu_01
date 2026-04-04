@@ -3,10 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/user_provider.dart';
 import '../widgets/gram_app_bar.dart';
-import '../widgets/stat_card.dart';
 import '../widgets/action_card.dart';
 import '../widgets/section_header.dart';
-import 'asha_consultation_screen.dart';
 
 class AshaWorkerDashboard extends StatefulWidget {
   const AshaWorkerDashboard({super.key});
@@ -20,149 +18,112 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final user = Provider.of<UserProvider>(context).user;
-    final name = user?['name'] ?? 'User';
-    
-    String villageText = 'Local';
-    if (user != null && user['location'] != null) {
-      if (user['location'] is Map) {
-        villageText = user['location']['village'] ?? 'Local';
-      } else {
-        villageText = user['location']?.split(',')?.first?.trim() ?? 'Local';
-      }
-    }
-    
+    final userName = user?['name'] ?? 'ASHA Worker';
+
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: AppColors.adaptiveBackground(context),
       appBar: GramAppBar(
-        roleLabel: 'ASHA Worker Dashboard',
+        roleLabel: 'ASHA Dashboard',
         onLogoutTap: () => Navigator.pushReplacementNamed(context, '/home'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Greeting
-              Text(
-                'Namaste, ${name.split(' ').first} 🙏',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: theme.textTheme.displayLarge?.color),
-              ),
-              const SizedBox(height: 4),
-              Text('Village: $villageText • ASHA ID: ${user?['ashaId'] ?? 'N/A'}', style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color)),
-              const SizedBox(height: 20),
-
-              // Stats
-              Row(
+              // Greeting Section
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: StatCard(
-                      title: 'Patients Attended',
-                      value: '42',
-                      icon: Icons.people_outline,
-                      bgColor: AppColors.ashaWorkerPink,
-                      textColor: Colors.white,
-                      iconColor: Colors.white,
-                      iconBgColor: Colors.white.withValues(alpha: 0.2),
-                    ),
+                  Text(
+                    'Namaste, $userName 🙏',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context)),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: StatCard(
-                      title: 'Home Visits',
-                      value: '12',
-                      icon: Icons.home_outlined,
-                      bgColor: AppColors.primaryTeal,
-                      textColor: Colors.white,
-                      iconColor: Colors.white,
-                      iconBgColor: Colors.white.withValues(alpha: 0.2),
-                    ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Village Service • ID: ${user?['ashaId'] ?? 'N/A'}', 
+                    style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))
+                  ),
+                  Text(
+                    '${user?['village'] ?? ''}${user?['village'] != null && user?['block'] != null ? ', ' : ''}${user?['block'] ?? ''}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-              // Quick Actions
-              const SectionHeader(title: 'Patient Management'),
+              const SectionHeader(title: 'Community Care'),
               ActionCard(
                 title: 'Book Consultation',
-                subtitle: 'Register symptoms and book doctor for patient',
-                icon: Icons.calendar_month_outlined,
-                isDark: true,
-                accentColor: AppColors.ashaWorkerPink,
-                onTap: () async {
-                   Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AshaConsultationScreen(bookedBy: 'asha'),
-                    ),
-                  );
-                },
-              ),
-              ActionCard(
-                title: 'Search Patient',
-                subtitle: 'Find patient by UID to view complete profile',
-                icon: Icons.person_search_outlined,
+                subtitle: 'Request a doctor session for a patient',
+                icon: Icons.add_box_outlined,
                 isDark: true,
                 accentColor: AppColors.primaryTeal,
-                onTap: () => Navigator.pushNamed(context, '/search_patient'),
-              ),
-              ActionCard(
-                title: 'View Health Records',
-                subtitle: 'Check history and standardized prescriptions',
-                icon: Icons.history_edu_outlined,
-                isDark: true,
-                accentColor: AppColors.softBlue,
-                onTap: () => Navigator.pushNamed(context, '/search_patient'),
+                onTap: () => Navigator.pushNamed(context, '/asha_consultation'),
               ),
               ActionCard(
                 title: 'Add New Patient',
-                subtitle: 'Register a new villager with health ID',
+                subtitle: 'Register a village member into the system',
                 icon: Icons.person_add_outlined,
                 isDark: true,
-                accentColor: AppColors.ashaWorkerPink,
-                onTap: () => Navigator.pushNamed(context, '/add_patient'),
+                accentColor: AppColors.softBlue,
+                onTap: () => Navigator.pushNamed(context, '/new_patient_registration'),
               ),
-              const SizedBox(height: 60),
+              ActionCard(
+                title: 'View Prescriptions',
+                subtitle: 'Search & view patient prescription history',
+                icon: Icons.description_outlined,
+                isDark: true,
+                accentColor: AppColors.panchayatPurple,
+                onTap: () => Navigator.pushNamed(context, '/view_prescription_search'),
+              ),
+              ActionCard(
+                title: 'Record Vitals',
+                subtitle: 'Track BP, Sugar, and SpO2 for members',
+                icon: Icons.monitor_heart_outlined,
+                isDark: true,
+                accentColor: Colors.pinkAccent,
+                onTap: () => Navigator.pushNamed(context, '/vitals_recorder'),
+              ),
+              
+              const SizedBox(height: 80),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
+        child: _buildBottomNavBar(),
+      ),
     );
   }
 
   Widget _buildBottomNavBar() {
-    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
-      child: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            color: theme.cardTheme.color,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
-              _buildNavItem(1, Icons.search, Icons.search, 'Search'),
-              _buildNavItem(2, Icons.person_outline, Icons.person, 'Profile'),
-            ],
-          ),
-        ),
+      decoration: BoxDecoration(
+        color: AppColors.adaptiveSurface(context).withAlpha(240),
+        borderRadius: BorderRadius.circular(40),
+        border: Border.all(color: AppColors.adaptiveBorder(context)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))
+        ]
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildNavItem(Icons.home, 'Home', 0),
+          _buildNavItem(Icons.person_search_outlined, 'Search Patient', 1),
+          _buildNavItem(Icons.person_outline, 'Profile', 2),
+        ],
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
+  Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
-    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () async {
         if (index == 0) {
@@ -175,26 +136,26 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
         } else if (index == 2) {
           await Navigator.pushNamed(context, '/profile', arguments: 'asha');
         }
-        
+
         if (mounted) {
           setState(() => _currentIndex = 0);
         }
       },
-      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: EdgeInsets.symmetric(horizontal: isSelected ? 20 : 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.ashaWorkerPink.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: isSelected
+            ? BoxDecoration(
+                color: AppColors.primaryTeal.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(30),
+              )
+            : null,
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(isSelected ? activeIcon : icon, color: isSelected ? AppColors.ashaWorkerPink : theme.textTheme.bodySmall?.color, size: 24),
+            Icon(icon, color: isSelected ? AppColors.primaryTeal : AppColors.adaptiveTextSecondary(context), size: 24),
             if (isSelected) ...[
-              const SizedBox(width: 6),
-              Text(label, style: const TextStyle(color: AppColors.ashaWorkerPink, fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(width: 8),
+              Text(label, style: const TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.bold, fontSize: 13)),
             ],
           ],
         ),

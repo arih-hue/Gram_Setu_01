@@ -82,7 +82,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: Colors.black.withOpacity(0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -167,7 +167,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.emergencyRed.withValues(alpha: 0.3),
+                    color: AppColors.emergencyRed.withOpacity(0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -194,7 +194,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   ),
                   Positioned(
                     right: 20,
-                    child: Icon(Icons.arrow_forward_ios, color: Colors.white.withValues(alpha: 0.5), size: 16),
+                    child: Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.5), size: 16),
                   ),
                 ],
               ),
@@ -227,10 +227,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         decoration: BoxDecoration(
           color: theme.cardTheme.color,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border.all(color: color.withOpacity(0.3)),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.05),
+              color: color.withOpacity(0.05),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -243,7 +243,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
+                color: color.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 32),

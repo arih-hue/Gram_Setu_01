@@ -80,9 +80,9 @@ class _MedicineReminderScreenState extends State<MedicineReminderScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: taken ? AppColors.success.withValues(alpha: 0.05) : AppColors.adaptiveSurface(context),
+            color: taken ? AppColors.success.withOpacity(0.05) : AppColors.adaptiveSurface(context),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: taken ? AppColors.success.withValues(alpha: 0.3) : AppColors.adaptiveBorder(context)),
+            border: Border.all(color: taken ? AppColors.success.withOpacity(0.3) : AppColors.adaptiveBorder(context)),
           ),
           child: Row(
             children: [

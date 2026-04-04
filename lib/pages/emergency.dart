@@ -54,7 +54,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                     shape: BoxShape.circle,
                     gradient: AppColors.emergencyGradient,
                     boxShadow: [
-                      BoxShadow(color: AppColors.emergencyRed.withValues(alpha: 0.4), blurRadius: 30, spreadRadius: 5),
+                      BoxShadow(color: AppColors.emergencyRed.withOpacity(0.4), blurRadius: 30, spreadRadius: 5),
                     ],
                   ),
                   child: Column(
@@ -103,7 +103,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                           onSelected: (v) => setState(() => _symptoms[i]['selected'] = v),
                           label: Text(s['label'] as String, style: const TextStyle(fontSize: 12)),
                           avatar: Icon(s['icon'] as IconData, size: 16),
-                          selectedColor: AppColors.emergencyRed.withValues(alpha: 0.15),
+                          selectedColor: AppColors.emergencyRed.withOpacity(0.15),
                           checkmarkColor: AppColors.emergencyRed,
                           side: BorderSide(color: (s['selected'] as bool) ? AppColors.emergencyRed : AppColors.adaptiveBorder(context)),
                         );
@@ -184,7 +184,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Column(
@@ -225,7 +225,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

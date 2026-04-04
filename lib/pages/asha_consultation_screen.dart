@@ -146,8 +146,8 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
             decoration: BoxDecoration(
               color: theme.cardTheme.color,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: accentColor.withValues(alpha: 0.1)),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]
+              border: Border.all(color: accentColor.withOpacity(0.1)),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]
             ),
             child: Column(
               children: [
@@ -178,7 +178,7 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
                          decoration: InputDecoration(
                            hintText: 'Describe current health issues...',
                            filled: true,
-                           fillColor: theme.dividerColor.withValues(alpha: 0.05),
+                           fillColor: theme.dividerColor.withOpacity(0.05),
                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                          ),
                        ),
@@ -223,7 +223,7 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
           const SizedBox(height: 80),
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: AppColors.success.withOpacity(0.1), shape: BoxShape.circle),
             child: Icon(Icons.check_circle, size: 80, color: AppColors.success),
           ),
           const SizedBox(height: 32),

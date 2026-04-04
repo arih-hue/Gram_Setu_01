@@ -144,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   backgroundColor: theme.cardTheme.color,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
+                    side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
                   ),
                 ),
               ),
@@ -167,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _roleColor.withValues(alpha: 0.1),
+                  color: _roleColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(

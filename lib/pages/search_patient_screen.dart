@@ -97,7 +97,7 @@ class _SearchPatientScreenState extends State<SearchPatientScreen> {
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.emergencyRed.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: AppColors.emergencyRed.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
                 child: Row(
                   children: [
                     const Icon(Icons.error_outline, color: AppColors.emergencyRed, size: 20),

@@ -202,7 +202,7 @@ class _WritePrescriptionScreenState extends State<WritePrescriptionScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.adaptiveSurfaceVariant(context).withValues(alpha: 0.3),
+        color: AppColors.adaptiveSurfaceVariant(context).withOpacity(0.3),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.adaptiveBorder(context)),
       ),
@@ -284,7 +284,7 @@ class _WritePrescriptionScreenState extends State<WritePrescriptionScreen> {
                   ),
                 ),
               ),
-              Container(width: 1, height: 20, color: AppColors.adaptiveBorder(context).withValues(alpha: 0.5), margin: const EdgeInsets.symmetric(horizontal: 8)),
+              Container(width: 1, height: 20, color: AppColors.adaptiveBorder(context).withOpacity(0.5), margin: const EdgeInsets.symmetric(horizontal: 8)),
               Expanded(
                 child: TextField(
                   controller: med.timingController,

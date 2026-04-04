@@ -27,12 +27,12 @@ class ActionCard extends StatelessWidget {
     final titleColor = isDark ? Colors.white : theme.textTheme.titleMedium?.color;
     final subColor = isDark ? Colors.white70 : theme.textTheme.bodyMedium?.color;
     final iconBgColor = isDark
-        ? Colors.white.withValues(alpha: 0.15)
-        : (accentColor?.withValues(alpha: 0.1) ?? theme.colorScheme.surfaceContainerHighest);
+        ? Colors.white.withOpacity(0.15)
+        : (accentColor?.withOpacity(0.1) ?? theme.colorScheme.surfaceContainerHighest);
     final iconClr = isDark
         ? Colors.white
         : (accentColor ?? theme.textTheme.titleMedium?.color);
-    final borderColor = isDark ? Colors.transparent : theme.dividerColor.withValues(alpha: 0.1);
+    final borderColor = isDark ? Colors.transparent : theme.dividerColor.withOpacity(0.1);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),

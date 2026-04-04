@@ -58,7 +58,7 @@ class GramAppBar extends StatelessWidget implements PreferredSizeWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: AppColors.primaryTeal.withValues(alpha: 0.1),
+              color: AppColors.primaryTeal.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(

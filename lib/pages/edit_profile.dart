@@ -295,7 +295,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+                  border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
                   color: theme.cardTheme.color,
                 ),
                 child: DropdownButtonHideUnderline(

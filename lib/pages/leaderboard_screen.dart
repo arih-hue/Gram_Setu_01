@@ -16,7 +16,8 @@ class LeaderboardScreen extends StatefulWidget {
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   bool _isLoading = true;
   List<dynamic> _leaderboard = [];
-  String _sortOrder = 'desc'; // Default descending
+  Map<String, dynamic>? _myStats;
+  bool _isAscending = false;
 
   @override
   void initState() {
@@ -25,14 +26,25 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Future<void> _fetchLeaderboard() async {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user == null) return;
+    final doctorId = user['id'] ?? user['_id'];
+
     setState(() => _isLoading = true);
     try {
-      final response = await ApiService.get('/doctor/leaderboard?order=$_sortOrder');
+      final order = _isAscending ? 'asc' : 'desc';
+      final response = await ApiService.get('/doctor/leaderboard?order=$order');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (mounted) {
           setState(() {
             _leaderboard = (data['leaderboard'] as List? ?? []);
+            final index = _leaderboard.indexWhere((d) => d['doctorId'] == doctorId);
+            if (index != -1) {
+              _myStats = _leaderboard[index];
+            } else {
+              _myStats = null;
+            }
             _isLoading = false;
           });
         }
@@ -44,9 +56,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     }
   }
 
-  void _toggleSort() {
+  void _toggleOrder() {
     setState(() {
-      _sortOrder = (_sortOrder == 'desc') ? 'asc' : 'desc';
+      _isAscending = !_isAscending;
     });
     _fetchLeaderboard();
   }
@@ -55,155 +67,151 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final user = Provider.of<UserProvider>(context).user;
-    final doctorId = user?['_id'];
+    final doctorId = user?['id'] ?? user?['_id'];
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: GramAppBar(
-        roleLabel: 'Doctor Standings',
+      backgroundColor: AppColors.adaptiveBackground(context),
+      appBar: const GramAppBar(
+        roleLabel: 'Rewards & Recognition',
         showBack: true,
-        onSosTap: _toggleSort, // Reusing SOS slot for sort toggle to save space or adding custom action
       ),
-      body: Column(
-        children: [
-          _buildSortHeader(theme),
-          Expanded(
-            child: _isLoading 
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              _buildMySummaryHeader(theme),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('LEADERBOARD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.adaptiveTextSecondary(context))),
+                    TextButton.icon(
+                       onPressed: _toggleOrder,
+                       icon: Icon(_isAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 16),
+                       label: Text(_isAscending ? 'Ascending' : 'Descending', style: const TextStyle(fontSize: 12)),
+                       style: TextButton.styleFrom(foregroundColor: AppColors.primaryTeal),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: RefreshIndicator(
                   onRefresh: _fetchLeaderboard,
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(16),
                     itemCount: _leaderboard.length,
                     itemBuilder: (context, index) {
-                      final entry = _leaderboard[index];
+                      final entry = (index < _leaderboard.length) ? _leaderboard[index] : {};
                       final isMe = entry['doctorId'] == doctorId;
                       final rank = entry['rank'] ?? (index + 1);
 
-                      return _buildLeaderboardTile(theme, rank, entry['doctorName'], entry['totalHours'] ?? '0', isMe);
+                      return _buildLeaderboardTile(theme, rank, entry, isMe);
                     },
                   ),
                 ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSortHeader(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.workspace_premium, color: AppColors.accentYellow, size: 20),
-              const SizedBox(width: 8),
-              Text('Monthly Rankings', style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.displayLarge?.color)),
+              ),
             ],
           ),
-          InkWell(
-            onTap: _toggleSort,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.primaryTeal.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primaryTeal.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _sortOrder == 'desc' ? Icons.trending_down : Icons.trending_up,
-                    size: 14,
-                    color: AppColors.primaryTeal,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _sortOrder == 'desc' ? 'Highest Service First' : 'Lowest Service First',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
-                  ),
-                ],
-              ),
-            ),
+    );
+  }
+
+  Widget _buildMySummaryHeader(ThemeData theme) {
+    if (_myStats == null) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.adaptiveSurface(context),
+        border: Border(bottom: BorderSide(color: AppColors.adaptiveBorder(context))),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _summaryItem('My Rank', '#${_myStats!['rank'] ?? '-'}', Icons.leaderboard_outlined, AppColors.accentYellow),
+              Container(height: 40, width: 1, color: AppColors.adaptiveBorder(context)),
+              _summaryItem('Total Hours', '${_myStats!['totalHours'] ?? 0}h', Icons.schedule_outlined, AppColors.softBlue),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLeaderboardTile(ThemeData theme, int rank, String name, dynamic hours, bool isMe) {
-    final isTop3 = rank <= 3;
-    final Color rankColor;
-    if (rank == 1) {
-      rankColor = const Color(0xFFFFD700); // Gold
-    } else if (rank == 2) {
-      rankColor = const Color(0xFFC0C0C0); // Silver
-    } else if (rank == 3) {
-      rankColor = const Color(0xFFCD7F32); // Bronze
-    } else {
-      rankColor = theme.dividerColor;
-    }
+  Widget _summaryItem(String label, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 24),
+        const SizedBox(height: 8),
+        Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        Text(label, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
+      ],
+    );
+  }
+
+  Widget _buildLeaderboardTile(ThemeData theme, int rank, Map<String, dynamic> entry, bool isMe) {
+    final bool isChampion = rank == 1;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isMe ? AppColors.doctorGreen.withValues(alpha: 0.05) : theme.cardTheme.color,
+        color: isMe ? AppColors.accentYellow.withOpacity(0.05) : AppColors.adaptiveSurface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isMe ? const Color(0xFFFFD700) : theme.dividerColor.withValues(alpha: 0.1),
-          width: isMe ? 2.5 : 1.0,
+          color: isMe ? AppColors.accentYellow : AppColors.adaptiveBorder(context),
+          width: isMe ? 2 : 1,
         ),
-        boxShadow: isMe ? [BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: 0.2), blurRadius: 10)] : null,
+        boxShadow: isMe ? [BoxShadow(color: AppColors.accentYellow.withOpacity(0.1), blurRadius: 10)] : null,
       ),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 36,
+            height: 36,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isTop3 ? rankColor.withValues(alpha: 0.15) : theme.dividerColor.withValues(alpha: 0.05),
+              color: isChampion ? AppColors.accentYellow : AppColors.adaptiveBackground(context),
               shape: BoxShape.circle,
             ),
             child: Text(
               '#$rank',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: isTop3 ? rankColor : theme.textTheme.bodySmall?.color,
+                fontSize: 14,
+                color: isChampion ? Colors.black : AppColors.adaptiveTextPrimary(context),
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           CircleAvatar(
-             radius: 20,
-             backgroundColor: AppColors.primaryTeal.withValues(alpha: 0.1),
-             child: Icon(Icons.person, color: isMe ? AppColors.doctorGreen : AppColors.primaryTeal, size: 20),
+            radius: 20,
+            backgroundColor: isMe ? AppColors.accentYellow.withOpacity(0.2) : AppColors.primaryTeal.withOpacity(0.1),
+            child: Icon(Icons.person, color: isMe ? AppColors.adaptiveTextPrimary(context) : AppColors.primaryTeal, size: 22),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  isMe ? '$name (You)' : 'Dr. $name',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: isMe ? FontWeight.bold : FontWeight.w600,
-                    color: theme.textTheme.displayLarge?.color,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      isMe ? '${entry['doctorName'] ?? ''} (Me)' : 'Dr. ${entry['doctorName'] ?? ''}',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context)),
+                    ),
+                    if (isChampion) ...[
+                      const SizedBox(width: 6),
+                      const Text('Champion 🏆', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.accentYellow)),
+                    ]
+                  ],
                 ),
                 Text(
-                  'Community Hero 🏅',
-                  style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color),
+                  entry['hospital'] ?? 'District Hospital',
+                  style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context)),
                 ),
               ],
             ),
@@ -212,10 +220,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${hours}h',
+                '${entry['totalHours'] ?? 0}h',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primaryTeal),
               ),
-              const Text('Service Time', style: TextStyle(fontSize: 10, color: Colors.grey)),
+              const Text('Contribution', style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold)),
             ],
           ),
         ],

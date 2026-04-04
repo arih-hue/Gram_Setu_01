@@ -112,8 +112,13 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
     final theme = Theme.of(context);
     final userData = Provider.of<UserProvider>(context).user;
     String name = userData?['name'] ?? 'User';
-    String subtitle =
-        'ID: ${userData?['_id']?.toString().substring(0, 8) ?? 'N/A'}';
+    String _safeId(dynamic id) {
+      if (id == null) return 'N/A';
+      String idStr = id.toString();
+      return idStr.length > 8 ? idStr.substring(0, 8) : idStr;
+    }
+
+    String subtitle = 'ID: ${_safeId(userData?['_id'])}';
 
     switch (role) {
       case 'doctor':
@@ -126,8 +131,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
         subtitle = 'Panchayat ID: ${userData?['panchayatId'] ?? 'ID-N/A'}';
         break;
       case 'patient':
-        subtitle =
-            'UID: ${userData?['uid'] ?? userData?['_id']?.toString().substring(0, 8) ?? 'N/A'}';
+        subtitle = 'UID: ${userData?['uid'] ?? _safeId(userData?['_id'])}';
         break;
     }
 
@@ -136,13 +140,13 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
       ),
       child: Column(
         children: [
           CircleAvatar(
             radius: 50,
-            backgroundColor: _getRoleColor(role).withValues(alpha: 0.1),
+            backgroundColor: _getRoleColor(role).withOpacity(0.1),
             child: Icon(Icons.person, size: 50, color: _getRoleColor(role)),
           ),
           const SizedBox(height: 16),
@@ -158,7 +162,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
-              color: _getRoleColor(role).withValues(alpha: 0.1),
+              color: _getRoleColor(role).withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -322,7 +326,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
                 color: theme.cardTheme.color,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: theme.dividerColor.withValues(alpha: 0.1),
+                  color: theme.dividerColor.withOpacity(0.1),
                 ),
               ),
               child: Column(
@@ -344,7 +348,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: _getRoleColor(role).withValues(alpha: 0.1),
+                                  color: _getRoleColor(role).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
@@ -379,7 +383,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
                         if (!isLast)
                           Divider(
                             height: 1,
-                            color: theme.dividerColor.withValues(alpha: 0.1),
+                            color: theme.dividerColor.withOpacity(0.1),
                           ),
                       ],
                     ),
@@ -406,7 +410,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
             },
             style: OutlinedButton.styleFrom(
               side: BorderSide(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                color: Theme.of(context).dividerColor.withOpacity(0.2),
               ),
               foregroundColor: Theme.of(context).textTheme.bodyMedium?.color,
               shape: RoundedRectangleBorder(

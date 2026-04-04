@@ -36,6 +36,7 @@ import 'package:gram_setu/pages/consultation_requests_screen.dart';
 import 'package:gram_setu/pages/accepted_consultations_screen.dart';
 import 'package:gram_setu/pages/search_patient_screen.dart';
 import 'package:gram_setu/pages/leaderboard_screen.dart';
+import 'package:gram_setu/pages/search_prescription_screen.dart';
 
 void main() {
   runApp(
@@ -96,6 +97,7 @@ class GramSetuApp extends StatelessWidget {
           '/accepted_consultations': (context) => const AcceptedConsultationsScreen(),
           '/search_patient': (context) => const SearchPatientScreen(),
           '/leaderboard': (context) => const LeaderboardScreen(),
+          '/view_prescription_search': (context) => const SearchPrescriptionScreen(),
         };
 
         final builder = routes[settings.name];

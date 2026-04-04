@@ -279,7 +279,7 @@ class _HealthAwarenessScreenState extends State<HealthAwarenessScreen> {
                     _searchDisease();
                   },
                   backgroundColor: theme.cardTheme.color,
-                  side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.15)),
+                  side: BorderSide(color: theme.dividerColor.withOpacity(0.15)),
                 );
               }).toList(),
             ),
@@ -306,7 +306,7 @@ class _HealthAwarenessScreenState extends State<HealthAwarenessScreen> {
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
       ),
       child: Column(
         children: [
@@ -338,7 +338,7 @@ class _HealthAwarenessScreenState extends State<HealthAwarenessScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
                 child: const Icon(Icons.medical_information, color: Colors.white, size: 28),
               ),
               const SizedBox(width: 16),
@@ -361,9 +361,9 @@ class _HealthAwarenessScreenState extends State<HealthAwarenessScreen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.warning.withValues(alpha: 0.08),
+            color: AppColors.warning.withOpacity(0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+            border: Border.all(color: AppColors.warning.withOpacity(0.3)),
           ),
           child: Row(
             children: [
@@ -383,14 +383,14 @@ class _HealthAwarenessScreenState extends State<HealthAwarenessScreen> {
           decoration: BoxDecoration(
             color: theme.cardTheme.color,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
           ),
           child: Column(
             children: symptoms.map<Widget>((s) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
                 children: [
-                  Icon(Icons.circle, size: 8, color: AppColors.emergencyRed.withValues(alpha: 0.7)),
+                  Icon(Icons.circle, size: 8, color: AppColors.emergencyRed.withOpacity(0.7)),
                   const SizedBox(width: 12),
                   Expanded(child: Text(s as String, style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color))),
                 ],
@@ -408,7 +408,7 @@ class _HealthAwarenessScreenState extends State<HealthAwarenessScreen> {
           decoration: BoxDecoration(
             color: theme.cardTheme.color,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
           ),
           child: Column(
             children: prevention.asMap().entries.map<Widget>((entry) => Padding(
@@ -419,7 +419,7 @@ class _HealthAwarenessScreenState extends State<HealthAwarenessScreen> {
                   Container(
                     width: 24,
                     height: 24,
-                    decoration: BoxDecoration(color: AppColors.primaryTeal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(color: AppColors.primaryTeal.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
                     child: Center(child: Text('${entry.key + 1}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryTeal))),
                   ),
                   const SizedBox(width: 12),

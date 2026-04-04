@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken');
 // @desc    Register a new patient
 // @access  Public
 router.post('/register', async (req, res) => {
-    const { name, uid, phone, location, gender } = req.body;
+    const { name, uid, phone, location, village, block, gender } = req.body;
 
     try {
         // Check if user with this Aadhar (uid) already exists
@@ -18,17 +18,15 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ success: false, message: 'User with this Aadhar number already exists' });
         }
 
-        // Check if user with this phone already exists
-        let userByPhone = await User.findOne({ phone });
-        if (userByPhone) {
-             return res.status(400).json({ success: false, message: 'User with this phone number already exists' });
-        }
-
         user = new User({
             name,
             uid,
             phone,
-            location,
+            location: {
+                village: village || '',
+                block: block || '',
+                fullLocation: location || ''
+            },
             gender,
             role: 'patient'
         });
@@ -48,34 +46,31 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// @route   GET /api/users/uid/:uid
-// @desc    Get user details by UID
+// @route   GET /api/patient/uid/:uid (also mapped to /users/uid/:uid)
 router.get('/uid/:uid', async (req, res) => {
     try {
         const user = await User.findOne({ uid: req.params.uid });
         if (!user) {
-            return res.status(404).json({ success: false, message: 'Patient not found' });
+            return res.status(404).json({ success: false, message: 'No patient found with this UID' });
         }
 
-        // Fetch full profile if requested (per instruction 7)
         const consultations = await Consultation.find({ patientUID: req.params.uid }).sort({ createdAt: -1 });
         const prescriptions = await Prescription.find({ patientUID: req.params.uid }).sort({ date: -1 });
 
         res.status(200).json({ 
             success: true, 
-            user,
             personalDetails: {
                 name: user.name,
-                age: user.age || 30,
-                gender: user.gender,
+                age: user.age || 'N/A',
+                gender: user.gender || 'N/A',
                 uid: user.uid,
-                location: user.location || { village: '', block: '', fullLocation: '' }
+                hospital: user.hospitalName || 'Rural Clinic'
             },
             consultations,
             prescriptions
         });
     } catch (error) {
-        console.error('Error fetching patient profile:', error);
+        console.error('Fetch Patient Error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
