@@ -7,10 +7,10 @@ class AppConstants {
 
   // ── API ────────────────────────────────────────────────────────────────────
   /// 1. Set this to true if you want to connect to a friend's backend.
-  static const bool useFriendBackend = false; 
+  static const bool useFriendBackend = true; 
   
   /// 2. Put your friend's Local IP here (found via `ipconfig` on their PC).
-  static const String _friendIp = '192.168.52.31'; // <--- CHANGE THIS
+  static const String _friendIp = '192.168.53.234'; // <--- UPDATED: Friend's IP
 
   /// Base URL is resolved automatically:
   static String get baseUrl {
