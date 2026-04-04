@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Consultation = require('../models/Consultation');
+const Prescription = require('../models/Prescription');
 const jwt = require('jsonwebtoken');
 
 // @route   POST /api/users/register
@@ -54,8 +56,26 @@ router.get('/uid/:uid', async (req, res) => {
         if (!user) {
             return res.status(404).json({ success: false, message: 'Patient not found' });
         }
-        res.status(200).json({ success: true, user });
+
+        // Fetch full profile if requested (per instruction 7)
+        const consultations = await Consultation.find({ patientUID: req.params.uid }).sort({ createdAt: -1 });
+        const prescriptions = await Prescription.find({ patientUID: req.params.uid }).sort({ date: -1 });
+
+        res.status(200).json({ 
+            success: true, 
+            user,
+            personalDetails: {
+                name: user.name,
+                age: user.age || 30,
+                gender: user.gender,
+                uid: user.uid,
+                location: user.location || { village: '', block: '', fullLocation: '' }
+            },
+            consultations,
+            prescriptions
+        });
     } catch (error) {
+        console.error('Error fetching patient profile:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });

@@ -2,9 +2,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
 class LocationService {
-  /// Fetches the current location and returns a string formatted as "City, State".
+  /// Fetches the current location and returns a Map containing village, block, and fullLocation.
   /// Throws an error message if fetching fails or permission is denied.
-  static Future<String> getCurrentLocation() async {
+  static Future<Map<String, String>> getCurrentLocationData() async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -47,21 +47,24 @@ class LocationService {
     if (placemarks.isNotEmpty) {
       final Placemark place = placemarks.first;
       
-      // Build "City, State"
-      String city = place.locality ?? place.subAdministrativeArea ?? place.name ?? '';
-      String state = place.administrativeArea ?? '';
+      // Build structured location
+      String village = place.locality ?? place.subAdministrativeArea ?? place.name ?? 'Unknown Village';
+      String block = place.subLocality ?? place.administrativeArea ?? 'Unknown Block';
+      String fullLocation = "$village, $block";
 
-      if (city.isNotEmpty && state.isNotEmpty) {
-        return '$city, $state';
-      } else if (city.isNotEmpty) {
-        return city;
-      } else if (state.isNotEmpty) {
-        return state;
-      } else {
-        throw 'Could not identify town or state from this location.';
-      }
+      return {
+        'village': village,
+        'block': block,
+        'fullLocation': fullLocation
+      };
     }
     
     throw 'No address found for these coordinates.';
+  }
+
+  // Backward compatibility
+  static Future<String> getCurrentLocation() async {
+    final data = await getCurrentLocationData();
+    return data['fullLocation']!;
   }
 }

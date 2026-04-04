@@ -14,18 +14,26 @@ class NewPanchayatRegistrationScreen extends StatefulWidget {
 }
 
 class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistrationScreen> {
+  final _nameController = TextEditingController();
   final _panchayatIdController = TextEditingController();
-  final _villageController = TextEditingController();
-  final _blockController = TextEditingController();
+  final _contactController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _positionController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  String _village = '';
+  String _block = '';
   bool _isFetchingLocation = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _panchayatIdController.dispose();
-    _villageController.dispose();
-    _blockController.dispose();
+    _contactController.dispose();
+    _locationController.dispose();
+    _positionController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -34,20 +42,19 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
   Future<void> _fetchGPSLocation() async {
     setState(() => _isFetchingLocation = true);
     try {
-      final location = await LocationService.getCurrentLocation();
+      final data = await LocationService.getCurrentLocationData();
       if (mounted) {
-        final parts = location.split(', ');
-        if (parts.length >= 2) {
-          _villageController.text = parts[0];
-          _blockController.text = parts[1];
-        } else {
-          _villageController.text = location;
-        }
+        _locationController.text = data['fullLocation']!;
+        _village = data['village']!;
+        _block = data['block']!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location detected! 📍'), backgroundColor: AppColors.success),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          const SnackBar(content: Text('Unable to fetch location. Please enter manually.'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -55,38 +62,30 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
     }
   }
 
-  bool _isLoading = false;
-
   Future<void> _handleRegister() async {
+    final name = _nameController.text.trim();
     final panchayatId = _panchayatIdController.text.trim();
-    final village = _villageController.text.trim();
-    final block = _blockController.text.trim();
+    final contact = _contactController.text.trim();
+    final location = _locationController.text.trim();
+    final position = _positionController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
-    if (panchayatId.isEmpty ||
-        village.isEmpty ||
-        block.isEmpty ||
-        password.isEmpty ||
-        password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields correctly, and ensure passwords match.')),
-      );
+    if (name.isEmpty || panchayatId.isEmpty || contact.isEmpty || location.isEmpty || position.isEmpty || password.isEmpty || password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields correctly.')));
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
       final user = await AuthService.registerPanchayat(
-        name: 'Panchayat Member', // Default name as user didn't request a name field
+        name: name,
         panchayatId: panchayatId,
-        phone: '', 
-        village: village,
-        block: block,
-        position: 'Member', 
+        phone: contact,
+        village: _village.isNotEmpty ? _village : location.split(',')[0].trim(),
+        block: _block.isNotEmpty ? _block : (location.contains(',') ? location.split(',')[1].trim() : ''),
+        fullLocation: location,
+        position: position,
         password: password,
       );
 
@@ -100,7 +99,7 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
           builder: (context) => AlertDialog(
              backgroundColor: Theme.of(context).cardTheme.color,
              title: Text('Registration Successful', style: TextStyle(color: Theme.of(context).textTheme.displayLarge?.color)),
-             content: SelectableText('Panchayat Account Created Successfully.', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16)),
+             content: const SelectableText('Panchayat Member Joined Successfully.', style: TextStyle(fontSize: 16)),
              actions: [
                TextButton(
                  onPressed: () {
@@ -137,7 +136,7 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Panchayat Registration', style: TextStyle(color: theme.textTheme.displayLarge?.color)),
+        title: Text('Panchayat Network Registration', style: TextStyle(color: theme.textTheme.displayLarge?.color)),
         backgroundColor: theme.cardTheme.color,
         iconTheme: IconThemeData(color: theme.iconTheme.color),
         elevation: 0,
@@ -148,7 +147,7 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Join Panchayat Network',
+              'Join Gram Setu Network',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -157,7 +156,7 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter your official details to monitor village health',
+              'Partner with us to improve local village healthcare access',
               style: TextStyle(
                 fontSize: 15,
                 color: theme.textTheme.bodyMedium?.color,
@@ -165,62 +164,65 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
             ),
             const SizedBox(height: 32),
 
-            // Panchayat ID Field
-            _buildLabel(theme, 'Panchayat ID'),
+            _buildLabel(theme, 'Full Name'),
+            _buildTextField(controller: _nameController, hintText: 'Enter your full name', icon: Icons.person_outline),
+            const SizedBox(height: 20),
+
+            _buildLabel(theme, 'Panchayat Member ID'),
             _buildTextField(
               controller: _panchayatIdController,
-              hintText: 'Enter official ID',
+              hintText: 'Enter Panchayat ID',
               icon: Icons.badge_outlined,
             ),
             const SizedBox(height: 20),
 
-            // Village Field
+            _buildLabel(theme, 'Contact Number'),
+            _buildTextField(
+              controller: _contactController,
+              hintText: '10-digit Mobile Number',
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              maxLength: 10,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            const SizedBox(height: 20),
+
             _buildLabel(
-              theme,
-              'Village',
+              theme, 
+              'Location (Village / Block)',
               trailing: GestureDetector(
                 onTap: _isFetchingLocation ? null : _fetchGPSLocation,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_isFetchingLocation)
-                      const SizedBox(
-                        height: 14,
-                        width: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.panchayatPurple),
-                      )
+                      const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.panchayatPurple))
                     else
                       const Icon(Icons.gps_fixed, size: 16, color: AppColors.panchayatPurple),
                     const SizedBox(width: 4),
                     Text(
-                      _isFetchingLocation ? 'Fetching...' : 'Fetch GPS',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.panchayatPurple,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      _isFetchingLocation ? 'Fetching...' : 'Fetch via GPS 📍',
+                      style: const TextStyle(fontSize: 12, color: AppColors.panchayatPurple, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
               ),
             ),
             _buildTextField(
-              controller: _villageController,
-              hintText: 'Enter Village name',
+              controller: _locationController,
+              hintText: 'e.g. Rampur, Sitapur',
               icon: Icons.location_on_outlined,
             ),
             const SizedBox(height: 20),
 
-            // Block Field
-            _buildLabel(theme, 'Block / District'),
+            _buildLabel(theme, 'Position / Title'),
             _buildTextField(
-              controller: _blockController,
-              hintText: 'Enter block name',
-              icon: Icons.map_outlined,
+              controller: _positionController,
+              hintText: 'e.g. Sarpanch, Secretary',
+              icon: Icons.work_outline,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
             
-            // Password Field
             _buildLabel(theme, 'Create Password'),
             _buildTextField(
               controller: _passwordController,
@@ -230,7 +232,6 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
             ),
             const SizedBox(height: 20),
 
-            // Confirm Password Field
             _buildLabel(theme, 'Confirm Password'),
             _buildTextField(
               controller: _confirmPasswordController,
@@ -240,45 +241,17 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
             ),
             const SizedBox(height: 40),
 
-            // Register Button
             SizedBox(
               width: double.infinity,
               height: 54,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleRegister,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.panchayatPurple,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.panchayatPurple),
                 child: _isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text('Complete Registration', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Partner with Gram Setu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
-            const SizedBox(height: 24),
-            
-            // Login Link
-            Center(
-              child: TextButton(
-                onPressed: () => Navigator.pushReplacementNamed(context, '/login', arguments: 'panchayat'),
-                child: RichText(
-                  text: TextSpan(
-                    style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 14),
-                    children: [
-                      const TextSpan(text: 'Already have an account? '),
-                      TextSpan(
-                        text: 'Login',
-                        style: TextStyle(color: AppColors.panchayatPurple, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -319,10 +292,14 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
       keyboardType: keyboardType,
       obscureText: isObscure,
       maxLength: maxLength,
+      onChanged: (val) => setState(() {}),
       inputFormatters: inputFormatters,
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: Icon(icon, color: AppColors.panchayatPurple),
+        suffixIcon: icon == Icons.location_on_outlined && controller.text.isNotEmpty 
+            ? const Icon(Icons.check_circle, color: AppColors.success, size: 20) 
+            : null,
         counterText: '',
       ),
     );

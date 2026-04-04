@@ -29,10 +29,12 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
       final response = await ApiService.get('/consultation/all');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() {
-          _requests = data['consultations'];
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _requests = (data['consultations'] as List? ?? []);
+            _isLoading = false;
+          });
+        }
       } else {
         throw Exception('Failed to load requests');
       }
@@ -51,29 +53,32 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
     if (user == null) return;
 
     try {
-      final doctorId = user['id'] ?? user['_id']; // Fallback for safety
+      final doctorId = user['id'] ?? user['_id'];
       if (doctorId == null) throw Exception('Doctor ID not found in session');
 
       final response = await ApiService.patch('/consultation/accept/$id', {
         'acceptedByDoctorId': doctorId,
-        'acceptedByDoctorName': user['name'],
+        'acceptedByDoctorName': user['name'] ?? 'Doctor',
       });
 
       if (response.statusCode == 200) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Consultation accepted successfully!')),
+            const SnackBar(content: Text('Consultation accepted successfully!'), backgroundColor: AppColors.success),
           );
-          // Remove from list immediately
           setState(() {
-            _requests.removeWhere((r) => r['_id'] == id);
+            _requests.removeWhere((r) => r != null && r['_id'] == id);
+          });
+          // Redirect to active consultations after brief delay
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) Navigator.pushReplacementNamed(context, '/accepted_consultations');
           });
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error accepting: $e')),
+          SnackBar(content: Text('Error accepting: $e'), backgroundColor: AppColors.error),
         );
       }
     }
@@ -83,7 +88,7 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.adaptiveBackground(context),
-      appBar: const GramAppBar(roleLabel: 'Consultation Requests', showBack: true),
+      appBar: const GramAppBar(roleLabel: 'New Patient Requests', showBack: true),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
@@ -95,6 +100,7 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
                   itemCount: _requests.length,
                   itemBuilder: (context, index) {
                     final req = _requests[index];
+                    if (req == null) return const SizedBox.shrink();
                     return _buildRequestCard(req);
                   },
                 ),
@@ -112,6 +118,7 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
               Icon(Icons.assignment_turned_in_outlined, size: 64, color: AppColors.adaptiveTextSecondary(context)),
               const SizedBox(height: 16),
               Text('No pending requests', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context))),
+              Text('Check back later for new consultations.', style: TextStyle(color: AppColors.adaptiveTextSecondary(context))),
             ],
           ),
         ),
@@ -128,11 +135,7 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.adaptiveBorder(context)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -142,7 +145,7 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                req['patientName'] ?? 'Unknown',
+                req['patientName'] ?? 'Unknown Patient',
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Container(
@@ -152,44 +155,44 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'UID: ${req['patientUID']}',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
+                  'UID: ${req['patientUID'] ?? 'N/A'}',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
-              _infoBadge(Icons.person_outline, '${req['patientAge']} Yrs'),
-              const SizedBox(width: 8),
-              _infoBadge(Icons.wc, req['patientGender']),
-              const SizedBox(width: 8),
-              _infoBadge(Icons.bookmark_outline, 'By: ${req['bookedBy']}'),
+              _infoBadge(Icons.person_outline, '${req['patientAge'] ?? '30'} Yrs'),
+              const SizedBox(width: 12),
+              _infoBadge(Icons.wc, req['patientGender'] ?? 'N/A'),
+              const SizedBox(width: 12),
+              _infoBadge(Icons.badge_outlined, 'By: ${req['bookedBy'] ?? 'Self'}'),
             ],
           ),
           const Divider(height: 24),
-          Text(
-            'Reason:',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextSecondary(context)),
+          const Text(
+            'REASON FOR CONSULTATION:',
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primaryTeal, letterSpacing: 0.5),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
-            req['reason'] ?? 'No reason provided',
+            req['reason'] ?? req['symptoms'] ?? 'No specific symptoms listed.',
             style: const TextStyle(fontSize: 15, height: 1.4),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
+            height: 48,
             child: ElevatedButton(
-              onPressed: () => _acceptRequest(req['_id']),
+              onPressed: () => _acceptRequest(req['_id']?.toString() ?? ''),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.doctorGreen,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Accept Consultation', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Accept Consultation', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
             ),
           ),
         ],
@@ -202,7 +205,7 @@ class _ConsultationRequestsScreenState extends State<ConsultationRequestsScreen>
       children: [
         Icon(icon, size: 14, color: AppColors.adaptiveTextSecondary(context)),
         const SizedBox(width: 4),
-        Text(text, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
+        Text(text, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context), fontWeight: FontWeight.w500)),
       ],
     );
   }

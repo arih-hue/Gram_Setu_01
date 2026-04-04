@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:gram_setu/pages/video_call_page.dart';
 
@@ -6,9 +5,7 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 
 import '../core/user_provider.dart';
-import '../services/api_service.dart';
 import '../widgets/gram_app_bar.dart';
-import '../widgets/stat_card.dart';
 import '../widgets/action_card.dart';
 import '../widgets/section_header.dart';
 
@@ -21,44 +18,10 @@ class PatientDashboard extends StatefulWidget {
 
 class _PatientDashboardState extends State<PatientDashboard> {
   int _currentIndex = 0;
-  int _consultationCount = 0;
-  int _prescriptionCount = 0;
-  List<dynamic> _recentPrescriptions = [];
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchDashboardData();
-  }
-
-  Future<void> _fetchDashboardData() async {
-    final user = Provider.of<UserProvider>(context, listen: false).user;
-    if (user == null) return;
-    
-    setState(() => _isLoading = true);
-    try {
-      final uid = user['uid'];
-      
-      // Fetch consultation count
-      final consResponse = await ApiService.get('/consultation/count/$uid');
-      if (consResponse.statusCode == 200) {
-        _consultationCount = jsonDecode(consResponse.body)['count'];
-      }
-
-      // Fetch prescriptions (to get count and recent)
-      final rxResponse = await ApiService.get('/prescription/patient/$uid');
-      if (rxResponse.statusCode == 200) {
-        final rxData = jsonDecode(rxResponse.body)['prescriptions'] as List;
-        _prescriptionCount = rxData.length;
-        _recentPrescriptions = rxData.take(2).toList();
-      }
-    } catch (e) {
-      // Log error silently or use a logger
-
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
   }
 
   @override
@@ -74,15 +37,13 @@ class _PatientDashboardState extends State<PatientDashboard> {
         roleLabel: 'Patient Dashboard',
         onLogoutTap: () => Navigator.pushReplacementNamed(context, '/home'),
       ),
-      body: RefreshIndicator(
-        onRefresh: _fetchDashboardData,
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Greeting Row
+              // Welcome Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -114,118 +75,28 @@ class _PatientDashboardState extends State<PatientDashboard> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // Stats
-              Row(
-                children: [
-                  Expanded(
-                    child: StatCard(
-                      title: 'Active Rx',
-                      value: '$_prescriptionCount Units',
-                      icon: Icons.medication_outlined,
-                      bgColor: AppColors.doctorGreen,
-                      textColor: Colors.white,
-                      iconBgColor: Colors.white.withValues(alpha: 0.2),
-                      iconColor: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: StatCard(
-                      title: 'Consultations',
-                      value: '$_consultationCount Done',
-                      icon: Icons.calendar_today_outlined,
-                      bgColor: AppColors.accentYellow,
-                      textColor: AppColors.adaptiveTextPrimary(context),
-                      iconBgColor: Colors.white.withValues(alpha: 0.4),
-                      iconColor: AppColors.adaptiveTextPrimary(context),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 24),
 
-            // Quick Actions
-            const SectionHeader(title: 'Quick Actions'),
-            ActionCard(
-              title: 'Book Consultation',
-              subtitle: 'Talk to a doctor now',
-              icon: Icons.medical_services_outlined,
-              isDark: true,
-              accentColor: AppColors.primaryTeal,
-              onTap: () => Navigator.pushNamed(context, '/consultation'),
-            ),
-            ActionCard(
-              title: 'Join Video Call',
-              subtitle: 'Start secure session',
-              icon: Icons.videocam_outlined,
-              isDark: true,
-              accentColor: AppColors.softBlue,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const VideoCallPage(roomName: 'doctor_consultation_room'),
-                  ),
-                );
-              },
-            ),
-            ActionCard(
-              title: 'View Prescriptions',
-              subtitle: 'Check your medicines',
-              icon: Icons.description_outlined,
-              isDark: true,
-              accentColor: AppColors.softBlue,
-              onTap: () => Navigator.pushNamed(context, '/prescriptions'),
-            ),
-            ActionCard(
-              title: 'Medicine Reminders',
-              subtitle: 'Set and manage alarms',
-              icon: Icons.notifications_none,
-              isDark: true,
-              accentColor: AppColors.warning,
-              onTap: () => Navigator.pushNamed(context, '/medicine_reminder'),
-            ),
-            ActionCard(
-              title: 'Health Vitals',
-              subtitle: 'Check heart rate & SpO2',
-              icon: Icons.monitor_heart_outlined,
-              isDark: true,
-              accentColor: AppColors.emergencyRed,
-              onTap: () => Navigator.pushNamed(context, '/vitals_recorder'),
-            ),
-            ActionCard(
-              title: 'AI Health Assistant',
-              subtitle: 'Preventive health tips',
-              icon: Icons.health_and_safety_outlined,
-              isDark: true,
-              accentColor: AppColors.doctorGreen,
-              onTap: () => Navigator.pushNamed(context, '/health_assistant'),
-            ),
-
-
-              const SizedBox(height: 20),
-
-              // Recent Prescriptions
-              SectionHeader(
-                title: 'Recent Prescriptions',
-                actionText: 'View All',
-                onAction: () => Navigator.pushNamed(context, '/prescriptions'),
+              // Action Section
+              const SectionHeader(title: 'Patient Portal'),
+              ActionCard(
+                title: 'Book Instant Consultation',
+                subtitle: 'Request a session with a doctor now',
+                icon: Icons.medical_services_outlined,
+                isDark: true,
+                accentColor: AppColors.primaryTeal,
+                onTap: () => Navigator.pushNamed(context, '/consultation'),
               ),
-              if (_isLoading)
-                const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
-              if (!_isLoading && _recentPrescriptions.isEmpty)
-                const Text('No recent prescriptions'),
-              ..._recentPrescriptions.map((rx) => _buildPrescriptionCard(
-                context, 
-                rx['medicines'][0]['medicineName'], 
-                rx['medicines'][0]['timing'], 
-                'From Dr. ${rx['doctorName']}'
-              )),
-              const SizedBox(height: 20),
-            ],
-          ),
+              ActionCard(
+                title: 'Medical History & Profile',
+                subtitle: 'View your prescriptions and patient details',
+                icon: Icons.account_circle_outlined,
+                isDark: true,
+                accentColor: AppColors.softBlue,
+                onTap: () => Navigator.pushNamed(context, '/profile', arguments: 'patient'),
+              ),
+              const SizedBox(height: 40),
+          ],
         ),
       ),
       bottomNavigationBar: _buildBottomNavBar(),
@@ -236,19 +107,10 @@ class _PatientDashboardState extends State<PatientDashboard> {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.3 : 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
       child: SafeArea(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: theme.cardTheme.color,
             borderRadius: BorderRadius.circular(24),
@@ -259,7 +121,6 @@ class _PatientDashboardState extends State<PatientDashboard> {
             children: [
               _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
               _buildNavItem(1, Icons.person_outline, Icons.person, 'Profile'),
-              _buildNavItem(2, Icons.settings_outlined, Icons.settings, 'Settings'),
             ],
           ),
         ),
@@ -271,71 +132,36 @@ class _PatientDashboardState extends State<PatientDashboard> {
     final isSelected = _currentIndex == index;
     final theme = Theme.of(context);
     return GestureDetector(
-      onTap: () {
-        setState(() => _currentIndex = index);
-        if (index == 1) {
-          Navigator.pushNamed(context, '/profile', arguments: {
-          'role': 'patient',
-          'user': ModalRoute.of(context)?.settings.arguments,
-        });
+      onTap: () async {
+        if (index == 0) {
+          setState(() => _currentIndex = index);
+          return;
         }
-
-        if (index == 2) Navigator.pushNamed(context, '/settings');
+        
+        if (index == 1) {
+          await Navigator.pushNamed(context, '/profile', arguments: 'patient');
+        }
+        
+        if (mounted) {
+          setState(() => _currentIndex = 0);
+        }
       },
-      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        curve: Curves.fastOutSlowIn,
-        padding: EdgeInsets.symmetric(horizontal: isSelected ? 20 : 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryTeal.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(isSelected ? activeIcon : icon, color: isSelected ? AppColors.primaryTeal : theme.textTheme.bodySmall?.color, size: 24),
             if (isSelected) ...[
-              const SizedBox(width: 6),
-              Text(label, style: const TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(width: 8),
+              Text(label, style: const TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.bold, fontSize: 13)),
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPrescriptionCard(BuildContext context, String name, String dosage, String subtitle) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppColors.primaryTeal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.medication_outlined, color: AppColors.primaryTeal),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: theme.textTheme.titleMedium?.color)),
-                Text(dosage, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color)),
-                const SizedBox(height: 2),
-                Text(subtitle, style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color)),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right, size: 20, color: AppColors.primaryTeal),
-        ],
       ),
     );
   }

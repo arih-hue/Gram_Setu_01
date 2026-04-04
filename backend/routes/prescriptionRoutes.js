@@ -20,8 +20,18 @@ router.post('/create', async (req, res) => {
 
         await newPrescription.save();
 
-        // Automatically mark the consultation as completed
-        await Consultation.findByIdAndUpdate(consultationId, { status: 'completed' });
+        // Mark consultation as completed and calculate duration
+        const consultation = await Consultation.findById(consultationId);
+        if (consultation) {
+            const completedAt = new Date();
+            const startedAt = consultation.startedAt || consultation.createdAt;
+            const durationMinutes = Math.round((completedAt - startedAt) / (1000 * 60));
+
+            consultation.status = 'completed';
+            consultation.completedAt = completedAt;
+            consultation.durationMinutes = durationMinutes;
+            await consultation.save();
+        }
 
         res.status(201).json({ success: true, message: 'Prescription created successfully' });
     } catch (error) {
@@ -35,10 +45,13 @@ router.get('/patient/:uid', async (req, res) => {
     try {
         const prescriptions = await Prescription.find({ 
             patientUID: req.params.uid 
-        }).sort({ date: -1 });
+        })
+        .populate('consultationId', 'reason')
+        .sort({ date: -1 });
         
         res.status(200).json({ success: true, prescriptions });
     } catch (error) {
+        console.error('Fetch Rx Error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });

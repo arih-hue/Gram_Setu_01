@@ -9,59 +9,24 @@ class AuthService {
   static final _googleSignIn = GoogleSignIn();
   static const _storage = FlutterSecureStorage();
 
-  // Base URL is managed centrally in lib/core/constants.dart
-  static String get _baseUrl => AppConstants.kBaseUrl;
+  static String get _baseUrl => AppConstants.baseUrl;
   static String get _googleAuthUrl => '$_baseUrl/api/auth/google';
 
-  /// Converts raw exceptions into user-friendly messages.
   static Exception _handleError(Object e) {
     if (e is TimeoutException) {
-      return Exception(
-        'Server unreachable. Please check your network connection and ensure the backend is running.',
-      );
+      return Exception('Server unreachable. Please check your network connection.');
     }
     if (e is Exception) return e;
     return Exception(e.toString());
-  }
-
-  static Future<Map<String, dynamic>?> signInWithGoogle(String role) async {
-    try {
-      final GoogleSignInAccount? account = await _googleSignIn.signIn();
-      if (account == null) return null;
-
-      final GoogleSignInAuthentication auth = await account.authentication;
-      final String? idToken = auth.idToken;
-
-      if (idToken == null) {
-        throw Exception('Failed to obtain ID Token from Google');
-      }
-
-
-      final response = await http.post(
-        Uri.parse(_googleAuthUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'idToken': idToken, 'role': role}),
-      );
-
-      final data = jsonDecode(response.body);
-
-
-      if (response.statusCode == 200 && data['success'] == true) {
-        await _storage.write(key: 'jwt_token', value: data['token']);
-        return data['user'];
-      } else {
-        throw Exception(data['message'] ?? 'Backend verification failed');
-      }
-    } catch (e) {
-      throw _handleError(e);
-    }
   }
 
   static Future<Map<String, dynamic>?> registerPatient({
     required String name,
     required String uid,
     required String phone,
-    required String location,
+    required String village,
+    required String block,
+    required String fullLocation,
     required String gender,
     required String age,
     required String emergencyContact,
@@ -69,28 +34,24 @@ class AuthService {
   }) async {
     try {
       final regUrl = '$_baseUrl/api/auth/register';
-
-
-      final response = await http
-          .post(
-            Uri.parse(regUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'name': name,
-              'uid': uid,
-              'phone': phone,
-              'location': location,
-              'gender': gender,
-              'age': age,
-              'emergencyContact': emergencyContact,
-              'password': password,
-            }),
-          )
-          .timeout(AppConstants.kRequestTimeout);
+      final response = await http.post(
+        Uri.parse(regUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'uid': uid,
+          'phone': phone,
+          'village': village,
+          'block': block,
+          'location': fullLocation,
+          'gender': gender,
+          'age': age,
+          'emergencyContact': emergencyContact,
+          'password': password,
+        }),
+      ).timeout(AppConstants.kRequestTimeout);
 
       final data = jsonDecode(response.body);
-
-
       if (response.statusCode == 201 && data['success'] == true) {
         await _storage.write(key: 'jwt_token', value: data['token']);
         return data['user'];
@@ -107,30 +68,30 @@ class AuthService {
     required String mciId,
     required String phone,
     required String hospital,
+    required String village,
+    required String block,
+    required String fullLocation,
     required String password,
   }) async {
     try {
       final regUrl = '$_baseUrl/api/auth/register';
-
-
-      final response = await http
-          .post(
-            Uri.parse(regUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'name': name,
-              'mciNumber': mciId,
-              'phone': phone,
-              'hospitalName': hospital,
-              'password': password,
-              'role': 'doctor',
-            }),
-          )
-          .timeout(AppConstants.kRequestTimeout);
+      final response = await http.post(
+        Uri.parse(regUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'mciNumber': mciId,
+          'phone': phone,
+          'hospitalName': hospital,
+          'village': village,
+          'block': block,
+          'location': fullLocation,
+          'password': password,
+          'role': 'doctor',
+        }),
+      ).timeout(AppConstants.kRequestTimeout);
 
       final data = jsonDecode(response.body);
-
-
       if (response.statusCode == 201 && data['success'] == true) {
         await _storage.write(key: 'jwt_token', value: data['token']);
         return data['user'];
@@ -146,29 +107,29 @@ class AuthService {
     required String name,
     required String ashaId,
     required String phone,
+    required String village,
+    required String block,
+    required String fullLocation,
     required String password,
   }) async {
     try {
       final regUrl = '$_baseUrl/api/auth/register';
-
-
-      final response = await http
-          .post(
-            Uri.parse(regUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'name': name,
-              'ashaId': ashaId,
-              'phone': phone,
-              'password': password,
-              'role': 'asha',
-            }),
-          )
-          .timeout(AppConstants.kRequestTimeout);
+      final response = await http.post(
+        Uri.parse(regUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'ashaId': ashaId,
+          'phone': phone,
+          'village': village,
+          'block': block,
+          'location': fullLocation,
+          'password': password,
+          'role': 'asha',
+        }),
+      ).timeout(AppConstants.kRequestTimeout);
 
       final data = jsonDecode(response.body);
-
-
       if (response.statusCode == 201 && data['success'] == true) {
         await _storage.write(key: 'jwt_token', value: data['token']);
         return data['user'];
@@ -186,13 +147,12 @@ class AuthService {
     required String phone,
     required String village,
     required String block,
+    required String fullLocation,
     required String position,
     required String password,
   }) async {
     try {
       final regUrl = '$_baseUrl/api/auth/register';
-
-      
       final response = await http.post(
         Uri.parse(regUrl),
         headers: {'Content-Type': 'application/json'},
@@ -202,6 +162,7 @@ class AuthService {
           'phone': phone,
           'village': village,
           'block': block,
+          'location': fullLocation,
           'position': position,
           'password': password,
           'role': 'panchayat',
@@ -209,8 +170,6 @@ class AuthService {
       ).timeout(AppConstants.kRequestTimeout);
 
       final data = jsonDecode(response.body);
-
-
       if (response.statusCode == 201 && data['success'] == true) {
         await _storage.write(key: 'jwt_token', value: data['token']);
         return data['user'];
@@ -228,19 +187,13 @@ class AuthService {
   }) async {
     try {
       final loginUrl = '$_baseUrl/api/auth/login';
-
-
-      final response = await http
-          .post(
-            Uri.parse(loginUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'identifier': identifier, 'password': password}),
-          )
-          .timeout(AppConstants.kRequestTimeout);
+      final response = await http.post(
+        Uri.parse(loginUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'identifier': identifier, 'password': password}),
+      ).timeout(AppConstants.kRequestTimeout);
 
       final data = jsonDecode(response.body);
-
-
       if (response.statusCode == 200 && data['success'] == true) {
         await _storage.write(key: 'jwt_token', value: data['token']);
         return data['user'];
@@ -257,21 +210,16 @@ class AuthService {
     await _storage.delete(key: 'jwt_token');
   }
 
-  static Future<Map<String, dynamic>?> updateProfile(
-    Map<String, dynamic> data,
-  ) async {
+  static Future<Map<String, dynamic>?> updateProfile(Map<String, dynamic> data) async {
     try {
       final updateUrl = '$_baseUrl/api/auth/update';
-      final response = await http
-          .put(
-            Uri.parse(updateUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(data),
-          )
-          .timeout(AppConstants.kRequestTimeout);
+      final response = await http.put(
+        Uri.parse(updateUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      ).timeout(AppConstants.kRequestTimeout);
 
       final resData = jsonDecode(response.body);
-
       if (response.statusCode == 200 && resData['success'] == true) {
         return resData['user'];
       } else {
@@ -285,16 +233,13 @@ class AuthService {
   static Future<bool> deleteProfile(Map<String, dynamic> identifiers) async {
     try {
       final deleteUrl = '$_baseUrl/api/auth/delete';
-      final response = await http
-          .delete(
-            Uri.parse(deleteUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(identifiers),
-          )
-          .timeout(AppConstants.kRequestTimeout);
+      final response = await http.delete(
+        Uri.parse(deleteUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(identifiers),
+      ).timeout(AppConstants.kRequestTimeout);
 
       final resData = jsonDecode(response.body);
-
       if (response.statusCode == 200 && resData['success'] == true) {
         await signOut();
         return true;
@@ -315,9 +260,7 @@ class AuthService {
       final parts = token.split('.');
       if (parts.length != 3) return null;
       var payloadStr = parts[1];
-      while (payloadStr.length % 4 != 0) {
-        payloadStr += '=';
-      }
+      while (payloadStr.length % 4 != 0) payloadStr += '=';
       final payloadMap = jsonDecode(utf8.decode(base64Url.decode(payloadStr)));
       return payloadMap['role'];
     } catch (e) {

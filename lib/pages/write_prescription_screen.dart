@@ -213,6 +213,7 @@ class _WritePrescriptionScreenState extends State<WritePrescriptionScreen> {
             children: [
               _headerInfo('PATIENT', widget.consultation['patientName']),
               _headerInfo('UID', widget.consultation['patientUID']),
+              _headerInfo('AGE', '${widget.consultation['patientAge']}'),
             ],
           ),
           const Divider(height: 24),

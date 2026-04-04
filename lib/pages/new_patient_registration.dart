@@ -19,6 +19,8 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
   final _aadharController = TextEditingController();
   final _contactController = TextEditingController();
   final _locationController = TextEditingController();
+  String _village = '';
+  String _block = '';
   final _emergencyContactController = TextEditingController();
   final _ageController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -48,14 +50,19 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
   Future<void> _fetchGPSLocation() async {
     setState(() => _isFetchingLocation = true);
     try {
-      final location = await LocationService.getCurrentLocation();
+      final data = await LocationService.getCurrentLocationData();
       if (mounted) {
-        _locationController.text = location;
+        _locationController.text = data['fullLocation']!;
+        _village = data['village']!;
+        _block = data['block']!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location detected! 📍'), backgroundColor: AppColors.success),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text('Unable to fetch location. Please enter manually.'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -103,7 +110,9 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
         name: name,
         uid: newUid,
         phone: contact,
-        location: location,
+        village: _village.isNotEmpty ? _village : location.split(',')[0].trim(),
+        block: _block.isNotEmpty ? _block : (location.contains(',') ? location.split(',')[1].trim() : ''),
+        fullLocation: location,
         gender: gender,
         age: age,
         emergencyContact: emergencyContact,
@@ -389,6 +398,9 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: Icon(icon, color: AppColors.patientBlue),
+        suffixIcon: icon == Icons.location_on_outlined && controller.text.isNotEmpty 
+            ? const Icon(Icons.check_circle, color: AppColors.success, size: 20) 
+            : null,
         counterText: '',
       ),
     );

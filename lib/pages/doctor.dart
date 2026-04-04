@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:gram_setu/pages/video_call_page.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../core/app_colors.dart';
 import 'package:provider/provider.dart';
+import '../core/app_colors.dart';
 import '../core/user_provider.dart';
-
+import '../services/api_service.dart';
 import '../widgets/gram_app_bar.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/action_card.dart';
@@ -19,6 +20,54 @@ class DoctorDashboard extends StatefulWidget {
 
 class _DoctorDashboardState extends State<DoctorDashboard> {
   int _currentIndex = 0;
+  
+  Map<String, dynamic> _stats = {
+    'patientsSeen': '0',
+    'hoursGiven': '0.0',
+    'thisWeekHours': '0.0'
+  };
+  
+  Map<String, dynamic>? _topDoctor;
+  int _userRank = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStats();
+  }
+
+  Future<void> _fetchStats() async {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user == null) return;
+
+    try {
+      final doctorId = user['_id'];
+      
+      // Fetch stats
+      final statsRes = await ApiService.get('/doctor/stats/$doctorId');
+      if (statsRes.statusCode == 200) {
+        final data = jsonDecode(statsRes.body);
+        _stats['patientsSeen'] = data['patientsSeen']?.toString() ?? '0';
+        _stats['hoursGiven'] = data['hoursGiven']?.toString() ?? '0.0';
+        _stats['thisWeekHours'] = data['thisWeekHours']?.toString() ?? '0.0';
+      }
+
+      // Fetch leaderboard for Community Champion
+      final lbRes = await ApiService.get('/doctor/leaderboard');
+      if (lbRes.statusCode == 200) {
+        final lbData = jsonDecode(lbRes.body)['leaderboard'] as List;
+        if (lbData.isNotEmpty) {
+          _topDoctor = lbData[0];
+          final myIndex = lbData.indexWhere((d) => d['doctorId'] == doctorId);
+          _userRank = myIndex != -1 ? myIndex + 1 : 0;
+        }
+      }
+    } catch (e) {
+      print('Doctor Stats Error: $e');
+    } finally {
+      if (mounted) setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,136 +81,117 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
         onLogoutTap: () => Navigator.pushReplacementNamed(context, '/home'),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Greeting
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Dr. ${userName.split(' ').first} 👨‍⚕️',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context)),
-                  ),
-                  const SizedBox(height: 4),
-                  Text('${user?['hospitalName'] ?? 'District Hospital'} • MCI: ${user?['mciNumber'] ?? 'N/A'}', 
-                    style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
-                  const SizedBox(height: 20),
+        child: RefreshIndicator(
+          onRefresh: _fetchStats,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Greeting
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dr. ${userName.split(' ').first} 👨‍⚕️',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text('${user?['hospitalName'] ?? 'District Hospital'} • MCI: ${user?['mciNumber'] ?? 'N/A'}', style: TextStyle(fontSize: 14, color: AppColors.adaptiveTextSecondary(context))),
+                  ],
+                ),
+                const SizedBox(height: 20),
 
-                  // Stats
-                   Row(
-                    children: [
-                      Expanded(child: StatCard(title: 'Patients Seen', value: '47', icon: Icons.people_outline, bgColor: AppColors.doctorGreen, textColor: Colors.white, iconColor: Colors.white, iconBgColor: Colors.white.withValues(alpha: 0.2))),
-                      const SizedBox(width: 12),
-                      Expanded(child: StatCard(title: 'Hours Given', value: '12h', icon: Icons.schedule, bgColor: AppColors.softBlue, textColor: Colors.white, iconColor: Colors.white, iconBgColor: Colors.white.withValues(alpha: 0.2))),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(child: StatCard(title: 'This Week', value: '3h', icon: Icons.trending_up, bgColor: AppColors.accentYellow, textColor: AppColors.adaptiveTextPrimary(context), iconColor: AppColors.adaptiveTextPrimary(context), iconBgColor: Colors.white.withValues(alpha: 0.4))),
-                      const SizedBox(width: 12),
-                      Expanded(child: StatCard(title: 'Rating', value: '4.8★', icon: Icons.star_outline, bgColor: AppColors.primaryTeal, textColor: Colors.white, iconColor: Colors.white, iconBgColor: Colors.white.withValues(alpha: 0.2))),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
+                // Stats
+                Row(
+                  children: [
+                    Expanded(child: StatCard(title: 'Patients Seen', value: _stats['patientsSeen'], icon: Icons.people_outline, bgColor: AppColors.doctorGreen, textColor: Colors.white, iconColor: Colors.white, iconBgColor: Colors.white.withValues(alpha: 0.2))),
+                    const SizedBox(width: 12),
+                    Expanded(child: StatCard(title: 'Hours Given', value: '${_stats['hoursGiven']}h', icon: Icons.schedule, bgColor: AppColors.softBlue, textColor: Colors.white, iconColor: Colors.white, iconBgColor: Colors.white.withValues(alpha: 0.2))),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                StatCard(title: 'This Week', value: '${_stats['thisWeekHours']}h', icon: Icons.trending_up, bgColor: AppColors.accentYellow, textColor: AppColors.adaptiveTextPrimary(context), iconColor: AppColors.adaptiveTextPrimary(context), iconBgColor: Colors.white.withValues(alpha: 0.4)),
+                const SizedBox(height: 24),
 
-                  // Quick Actions
-                  const SectionHeader(title: 'Quick Actions'),
-                  ActionCard(
-                    title: 'Pending Consultations',
-                    subtitle: '3 patients waiting',
-                    icon: Icons.pending_actions,
-                    isDark: true,
-                    accentColor: AppColors.doctorGreen,
-                    onTap: () {},
-                  ),
-                  ActionCard(
-                    title: 'Start Consultation',
-                    subtitle: 'Begin a new session',
-                    icon: Icons.videocam_outlined,
-                    isDark: true,
-                    accentColor: AppColors.doctorGreen,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const VideoCallPage(roomName: 'doctor_consultation_room'),
-                        ),
-                      );
-                    },
-                  ),
-                  ActionCard(
-                    title: 'Patient Records',
-                    subtitle: 'View patient history by UID',
-                    icon: Icons.folder_shared_outlined,
-                    isDark: true,
-                    accentColor: AppColors.softBlue,
-                    onTap: () {},
-                  ),
-                  ActionCard(
-                    title: 'Write Prescription',
-                    subtitle: 'Prescribe medicines',
-                    icon: Icons.edit_note,
-                    isDark: true,
-                    accentColor: AppColors.primaryTeal,
-                    onTap: () {},
-                  ),
-                  ActionCard(
-                    title: 'My Schedule',
-                    subtitle: 'Manage consultation slots',
-                    icon: Icons.calendar_month_outlined,
-                    isDark: true,
-                    accentColor: AppColors.panchayatPurple,
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 24),
+                // Quick Actions
+                const SectionHeader(title: 'Consultation Management'),
+                ActionCard(
+                  title: 'New Requests',
+                  subtitle: 'View and accept pending sessions',
+                  icon: Icons.pending_actions_outlined,
+                  isDark: true,
+                  accentColor: AppColors.doctorGreen,
+                  onTap: () => Navigator.pushNamed(context, '/consultation_requests'),
+                ).animate().fadeIn(delay: 100.ms),
+                ActionCard(
+                  title: 'Search Patient',
+                  subtitle: 'Enter Patient UID to retrieve complete medical profile',
+                  icon: Icons.person_search_outlined,
+                  isDark: true,
+                  accentColor: AppColors.primaryTeal,
+                  onTap: () => Navigator.pushNamed(context, '/search_patient'),
+                ).animate().fadeIn(delay: 200.ms),
+                ActionCard(
+                  title: 'View Prescriptions',
+                  subtitle: 'Search patient by UID to view past prescriptions',
+                  icon: Icons.history_edu_outlined,
+                  isDark: true,
+                  accentColor: AppColors.softBlue,
+                  onTap: () => Navigator.pushNamed(context, '/search_patient'), // Using same search page logic
+                ).animate().fadeIn(delay: 300.ms),
+                const SizedBox(height: 24),
 
-                  // Today's Schedule
-                  const SectionHeader(title: "Today's Schedule"),
-                  _buildScheduleItem('9:00 AM', 'Rajesh Kumar', 'Fever, headache', 'Completed', AppColors.success),
-                  _buildScheduleItem('10:30 AM', 'Priya Devi', 'Follow-up visit', 'Completed', AppColors.success),
-                  _buildScheduleItem('2:00 PM', 'Amit Singh', 'Chest pain (Urgent)', 'Upcoming', AppColors.warning),
-                  _buildScheduleItem('4:00 PM', 'Sunita Bai', 'Diabetes review', 'Upcoming', AppColors.info),
-                  const SizedBox(height: 24),
-
-                  // Recognition
+                // Community Champion
+                const SectionHeader(title: 'Community Champion 🏆'),
+                if (_topDoctor != null) 
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: AppColors.doctorGradient,
                       borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(color: AppColors.doctorGreen.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))
+                      ]
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(Icons.workspace_premium, color: Colors.white, size: 28),
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          child: const Text('🥇', style: TextStyle(fontSize: 20)),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Community Champion', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                              SizedBox(height: 2),
-                              Text('Thank you for 12 hours of service! 🎉', style: TextStyle(color: AppColors.adaptiveTextSecondary(context), fontSize: 13)),
+                              Text(
+                                _topDoctor!['doctorId'] == user?['_id'] 
+                                  ? 'You are the Champion!' 
+                                  : 'Top Hero: Dr. ${_topDoctor!['doctorName']}', 
+                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)
+                              ),
+                              Text(
+                                '${_topDoctor!['totalHours']} hours contributed this month', 
+                                style: const TextStyle(color: Colors.white70, fontSize: 13)
+                              ),
                             ],
                           ),
                         ),
+                        if (_userRank > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
+                            child: Text('Rank: #$_userRank', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          )
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ],
+                  ).animate().scale(delay: 400.ms),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
@@ -184,23 +214,35 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildNavItem(Icons.home_outlined, 'Home', 0),
-          _buildNavItem(Icons.people_outline, 'Patients', 1),
+          _buildNavItem(Icons.workspace_premium_outlined, 'Rewards', 1),
           _buildNavItem(Icons.person_outline, 'Profile', 2),
         ],
       ),
-    ).animate().slideY(begin: 1, delay: 800.ms, duration: 600.ms, curve: Curves.easeOutQuart);
+    ).animate().slideY(begin: 1, delay: 500.ms, duration: 600.ms, curve: Curves.easeOutQuart);
   }
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
-      onTap: () {
-        setState(() => _currentIndex = index);
-        if (index == 2) Navigator.pushNamed(context, '/profile', arguments: 'doctor');
+      onTap: () async {
+        if (index == 0) {
+           setState(() => _currentIndex = index);
+           return;
+        }
+
+        if (index == 1) {
+          await Navigator.pushNamed(context, '/leaderboard');
+        } else if (index == 2) {
+          await Navigator.pushNamed(context, '/profile', arguments: 'doctor');
+        }
+
+        if (mounted) {
+          setState(() => _currentIndex = 0);
+        }
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: isSelected
             ? BoxDecoration(
                 color: AppColors.accentYellow,

@@ -13,7 +13,7 @@ const PrescriptionSchema = new mongoose.Schema({
         timing: { type: String, required: true }
     }],
     extraNote: { type: String, default: null },
-    consultationId: { type: String, required: true }
+    consultationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Consultation', required: true }
 });
 
 module.exports = mongoose.model('Prescription', PrescriptionSchema);

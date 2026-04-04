@@ -23,7 +23,6 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map) {
       _role = args['role'] ?? widget.roleOverride ?? 'patient';
-      // _userData is now fetched live from Provider in build methods
     } else if (args is String) {
       _role = args;
     } else {
@@ -56,8 +55,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
             if (_role == 'patient') ..._buildPatientSections(context, _role),
             if (_role == 'doctor') ..._buildDoctorSections(context, _role),
             if (_role == 'asha') ..._buildAshaSections(context, _role),
-            if (_role == 'panchayat')
-              ..._buildPanchayatSections(context, _role),
+            if (_role == 'panchayat') ..._buildPanchayatSections(context, _role),
 
             const SizedBox(height: 24),
 
@@ -100,6 +98,17 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
     }
   }
 
+  String _getLocationString(dynamic loc) {
+     if (loc == null) return 'Not set';
+     if (loc is Map) {
+       final v = loc['village'] ?? '';
+       final b = loc['block'] ?? '';
+       if (v.isNotEmpty && b.isNotEmpty) return '$v, $b';
+       return loc['fullLocation'] ?? 'Not set';
+     }
+     return loc.toString();
+  }
+
   Widget _buildProfileSummary(BuildContext context, String role) {
     final theme = Theme.of(context);
     final userData = Provider.of<UserProvider>(context).user;
@@ -132,30 +141,10 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
       ),
       child: Column(
         children: [
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: _getRoleColor(role).withValues(alpha: 0.1),
-                child: Icon(Icons.person, size: 50, color: _getRoleColor(role)),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.camera_alt,
-                    size: 16,
-                    color: _getRoleColor(role),
-                  ),
-                ),
-              ),
-            ],
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: _getRoleColor(role).withValues(alpha: 0.1),
+            child: Icon(Icons.person, size: 50, color: _getRoleColor(role)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -213,10 +202,10 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
         ),
       ]),
       const SizedBox(height: 20),
-      _buildSection(role, 'Additional Details', [
+      _buildSection(role, 'Location Details', [
         _ProfileField(
-          label: 'Location/Village',
-          value: userData?['location'] ?? 'Not set',
+          label: 'Village/Block',
+          value: _getLocationString(userData?['location']),
           icon: Icons.location_on_outlined,
         ),
         _ProfileField(
@@ -249,16 +238,11 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
         ),
       ]),
       const SizedBox(height: 20),
-      _buildSection(role, 'App Activity', [
+      _buildSection(role, 'Service Details', [
         _ProfileField(
-          label: 'Volunteered',
-          value: '0 Hours',
-          icon: Icons.volunteer_activism_outlined,
-        ),
-        _ProfileField(
-          label: 'Avg Rating',
-          value: '5.0 / 5.0',
-          icon: Icons.star_outline,
+          label: 'Base Location',
+          value: _getLocationString(userData?['location']),
+          icon: Icons.verified_user_outlined,
         ),
       ]),
     ];
@@ -288,7 +272,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
       _buildSection(role, 'Village Assignment', [
         _ProfileField(
           label: 'Assigned Village',
-          value: userData?['location'] ?? 'Not set',
+          value: _getLocationString(userData?['location']),
           icon: Icons.location_on_outlined,
         ),
       ]),
@@ -306,12 +290,12 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
         ),
         _ProfileField(
           label: 'Village',
-          value: userData?['village'] ?? 'Not set',
+          value: userData?['village'] ?? userData?['location']?['village'] ?? 'Not set',
           icon: Icons.home_outlined,
         ),
         _ProfileField(
           label: 'Block',
-          value: userData?['block'] ?? 'Not set',
+          value: userData?['block'] ?? userData?['location']?['block'] ?? 'Not set',
           icon: Icons.map_outlined,
         ),
       ]),
@@ -361,9 +345,7 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: _getRoleColor(
-                                    role,
-                                  ).withValues(alpha: 0.1),
+                                  color: _getRoleColor(role).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
@@ -413,113 +395,8 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
   }
 
   Widget _buildActionButtons(BuildContext context, String role) {
-    final liveUser = Provider.of<UserProvider>(context).user;
-    final identifiers = {
-      '_id': liveUser?['_id'],
-      'uid': liveUser?['uid'],
-      'mciNumber': liveUser?['mciNumber'],
-      'ashaId': liveUser?['ashaId'],
-      'panchayatId': liveUser?['panchayatId'],
-    };
-
     return Column(
       children: [
-        if (role == 'patient' || role == 'doctor') ...[
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final liveUser = Provider.of<UserProvider>(context, listen: false).user;
-                Navigator.pushNamed(
-                  context,
-                  '/edit_profile',
-                  arguments: liveUser,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _getRoleColor(role),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              icon: const Icon(Icons.edit_outlined, color: Colors.white),
-              label: const Text(
-                'Update Information',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    backgroundColor: Theme.of(ctx).cardTheme.color,
-                    title: const Text('Delete Account?'),
-                    content: const Text(
-                      'This will permanently delete your account from Atlas. This cannot be undone.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(color: AppColors.emergencyRed),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirm == true) {
-                  try {
-                    await AuthService.deleteProfile(identifiers);
-                    if (!context.mounted) return;
-                    Provider.of<UserProvider>(context, listen: false).setUser({});
-                    Navigator.pushReplacementNamed(context, '/home');
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Failed to delete: $e'),
-                          backgroundColor: AppColors.error,
-                        ),
-                      );
-                    }
-                  }
-
-
-                }
-              },
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.emergencyRed),
-                foregroundColor: AppColors.emergencyRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              icon: const Icon(Icons.delete_forever),
-              label: const Text(
-                'Delete Account',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
         SizedBox(
           width: double.infinity,
           height: 56,

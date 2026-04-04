@@ -4,6 +4,7 @@ import '../core/app_colors.dart';
 import '../services/auth_service.dart';
 import 'package:provider/provider.dart';
 import '../core/user_provider.dart';
+import '../services/location_service.dart';
 
 class NewDoctorRegistrationScreen extends StatefulWidget {
   const NewDoctorRegistrationScreen({super.key});
@@ -17,8 +18,13 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
   final _mciController = TextEditingController();
   final _contactController = TextEditingController();
   final _hospitalController = TextEditingController();
+  final _locationController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  
+  String _village = '';
+  String _block = '';
+  bool _isFetchingLocation = false;
 
   @override
   void dispose() {
@@ -26,9 +32,33 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
     _mciController.dispose();
     _contactController.dispose();
     _hospitalController.dispose();
+    _locationController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchGPSLocation() async {
+    setState(() => _isFetchingLocation = true);
+    try {
+      final data = await LocationService.getCurrentLocationData();
+      if (mounted) {
+        _locationController.text = data['fullLocation']!;
+        _village = data['village']!;
+        _block = data['block']!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location detected! 📍'), backgroundColor: AppColors.success),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to fetch location. Please enter manually.'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFetchingLocation = false);
+    }
   }
 
   bool _isLoading = false;
@@ -38,6 +68,7 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
     final mciId = _mciController.text.trim();
     final contact = _contactController.text.trim();
     final hospital = _hospitalController.text.trim();
+    final location = _locationController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
@@ -45,6 +76,7 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
         mciId.isEmpty ||
         contact.isEmpty ||
         hospital.isEmpty ||
+        location.isEmpty ||
         password.isEmpty ||
         password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,6 +95,9 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
         mciId: mciId,
         phone: contact,
         hospital: hospital,
+        village: _village.isNotEmpty ? _village : location.split(',')[0].trim(),
+        block: _block.isNotEmpty ? _block : (location.contains(',') ? location.split(',')[1].trim() : ''),
+        fullLocation: location,
         password: password,
       );
 
@@ -76,7 +111,7 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
           builder: (context) => AlertDialog(
              backgroundColor: Theme.of(context).cardTheme.color,
              title: Text('Registration Successful', style: TextStyle(color: Theme.of(context).textTheme.displayLarge?.color)),
-             content: SelectableText('Doctor Account Created Successfully.', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16)),
+             content: const SelectableText('Doctor Account Created Successfully.', style: TextStyle(fontSize: 16)),
              actions: [
                TextButton(
                  onPressed: () {
@@ -141,12 +176,10 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
             ),
             const SizedBox(height: 32),
 
-            // Name Field
             _buildLabel(theme, 'Full Name'),
             _buildTextField(controller: _nameController, hintText: 'Enter your full name', icon: Icons.person_outline),
             const SizedBox(height: 20),
 
-            // MCI Number Field
             _buildLabel(theme, 'MCI Registration ID'),
             _buildTextField(
               controller: _mciController,
@@ -155,7 +188,6 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
             ),
             const SizedBox(height: 20),
 
-            // Contact Field
             _buildLabel(theme, 'Contact Number'),
             _buildTextField(
               controller: _contactController,
@@ -167,7 +199,6 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
             ),
             const SizedBox(height: 20),
 
-            // Hospital Field
             _buildLabel(theme, 'Hospital / Clinic Associated With'),
             _buildTextField(
               controller: _hospitalController,
@@ -175,8 +206,35 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
               icon: Icons.local_hospital_outlined,
             ),
             const SizedBox(height: 20),
+
+            _buildLabel(
+              theme, 
+              'Location (Village / Block)',
+              trailing: GestureDetector(
+                onTap: _isFetchingLocation ? null : _fetchGPSLocation,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isFetchingLocation)
+                      const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.doctorGreen))
+                    else
+                      const Icon(Icons.gps_fixed, size: 16, color: AppColors.doctorGreen),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isFetchingLocation ? 'Fetching...' : 'Fetch via GPS 📍',
+                      style: const TextStyle(fontSize: 12, color: AppColors.doctorGreen, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            _buildTextField(
+              controller: _locationController,
+              hintText: 'e.g. Rampur, Sitapur Block',
+              icon: Icons.location_on_outlined,
+            ),
+            const SizedBox(height: 20),
             
-            // Password Field
             _buildLabel(theme, 'Create Password'),
             _buildTextField(
               controller: _passwordController,
@@ -186,7 +244,6 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
             ),
             const SizedBox(height: 20),
 
-            // Confirm Password Field
             _buildLabel(theme, 'Confirm Password'),
             _buildTextField(
               controller: _confirmPasswordController,
@@ -196,21 +253,14 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
             ),
             const SizedBox(height: 40),
 
-            // Register Button
             SizedBox(
               width: double.infinity,
               height: 54,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleRegister,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.doctorGreen,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.doctorGreen),
                 child: _isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : const Text('Complete Registration', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
@@ -220,16 +270,22 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
     );
   }
 
-  Widget _buildLabel(ThemeData theme, String text) {
+  Widget _buildLabel(ThemeData theme, String text, {Widget? trailing}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: theme.textTheme.titleMedium?.color,
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: theme.textTheme.titleMedium?.color,
+            ),
+          ),
+          if (trailing != null) trailing,
+        ],
       ),
     );
   }
@@ -248,10 +304,14 @@ class _NewDoctorRegistrationScreenState extends State<NewDoctorRegistrationScree
       keyboardType: keyboardType,
       obscureText: isObscure,
       maxLength: maxLength,
+      onChanged: (val) => setState(() {}),
       inputFormatters: inputFormatters,
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: Icon(icon, color: AppColors.doctorGreen),
+        suffixIcon: icon == Icons.location_on_outlined && controller.text.isNotEmpty 
+            ? const Icon(Icons.check_circle, color: AppColors.success, size: 20) 
+            : null,
         counterText: '',
       ),
     );

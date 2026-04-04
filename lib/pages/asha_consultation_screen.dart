@@ -18,6 +18,7 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
   
   bool _isLoading = false;
   bool _patientFound = false;
+  bool _showConsultationForm = false;
   Map<String, dynamic>? _patientData;
   bool _isSubmitted = false;
 
@@ -35,7 +36,10 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _showConsultationForm = false;
+    });
     try {
       final response = await ApiService.get('/patient/uid/$uid');
       if (response.statusCode == 200) {
@@ -45,24 +49,24 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
           _patientData = data['user'];
         });
       } else {
-        if (!mounted) return;
-        setState(() => _patientFound = false);
+        setState(() {
+          _patientFound = false;
+          _patientData = null;
+        });
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Patient not found')));
 
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error lookup: $e')));
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _submitConsultation() async {
     if (_patientData == null) return;
     if (_reasonController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a reason')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter symptoms/reason')));
       return;
     }
 
@@ -70,8 +74,8 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
     final body = {
       'patientName': _patientData!['name'],
       'patientUID': _patientData!['uid'],
-      'patientAge': _patientData!['age'] ?? 30, // Fallback if age not in User model yet
-      'patientGender': _patientData!['gender'] ?? 'Not specified',
+      'patientAge': _patientData!['age'] ?? '30',
+      'patientGender': _patientData!['gender'] ?? 'Others',
       'reason': _reasonController.text.trim(),
       'bookedBy': widget.bookedBy,
     };
@@ -79,21 +83,14 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
     try {
       final response = await ApiService.post('/consultation/create', body);
       if (response.statusCode == 201) {
-        if (!mounted) return;
-        setState(() {
-          _isSubmitted = true;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Consultation booked successfully!')));
-
+        setState(() => _isSubmitted = true);
       } else {
-        throw Exception('Failed to book');
+        throw Exception('Failed to book consultation');
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error booking: $e')));
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -104,7 +101,7 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: GramAppBar(roleLabel: 'Book Consultation', showBack: true, showSos: false),
+      appBar: GramAppBar(roleLabel: 'Consultation Booking', showBack: true, showSos: false),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: _isSubmitted 
@@ -118,21 +115,22 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Book Consultation', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: theme.textTheme.displayLarge?.color)),
+        Text('Book New Consultation', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: theme.textTheme.displayLarge?.color)),
         const SizedBox(height: 6),
-        Text('Search for a patient by UID and book a consultation.', style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color)),
+        Text('Connect a villager with a doctor by searching their UID.', style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color)),
         const SizedBox(height: 24),
 
         TextField(
           controller: _uidController,
           decoration: InputDecoration(
-            hintText: 'Enter Patient UID',
+            hintText: 'Enter Patient UID (e.g. PAT-123456)',
             prefixIcon: Icon(Icons.badge_outlined, color: accentColor),
             suffixIcon: IconButton(
               icon: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.search),
               onPressed: _isLoading ? null : _lookupPatient,
             ),
           ),
+          onSubmitted: (_) => _lookupPatient(),
         ),
         const SizedBox(height: 16),
 
@@ -140,35 +138,58 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: accentColor.withValues(alpha: 0.2)),
+              color: theme.cardTheme.color,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: accentColor.withValues(alpha: 0.1)),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]
             ),
             child: Column(
               children: [
-                _patientInfoRow('Name', _patientData!['name']),
-                _patientInfoRow('UID', _patientData!['uid']),
-                _patientInfoRow('Gender', _patientData!['gender'] ?? 'N/A'),
-                _patientInfoRow('Age', '${_patientData!['age'] ?? 'N/A'}'),
+                _patientInfoRow(theme, 'Patient Name', _patientData!['name']),
+                _patientInfoRow(theme, 'UID Number', _patientData!['uid']),
+                _patientInfoRow(theme, 'Gender', _patientData!['gender'] ?? 'N/A'),
+                _patientInfoRow(theme, 'Age', '${_patientData!['age'] ?? 'N/A'} years'),
+                const Divider(height: 24),
+                if (!_showConsultationForm)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => setState(() => _showConsultationForm = true),
+                      style: ElevatedButton.styleFrom(backgroundColor: accentColor, foregroundColor: Colors.white),
+                      child: const Text('Start New Consultation', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  )
+                else ...[
+                   Column(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                       const Text('Symptoms / Reason for Visit', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                       const SizedBox(height: 10),
+                       TextField(
+                         controller: _reasonController,
+                         maxLines: 4,
+                         decoration: InputDecoration(
+                           hintText: 'Describe current health issues...',
+                           filled: true,
+                           fillColor: theme.dividerColor.withValues(alpha: 0.05),
+                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                         ),
+                       ),
+                       const SizedBox(height: 20),
+                       SizedBox(
+                         width: double.infinity,
+                         height: 52,
+                         child: ElevatedButton(
+                           onPressed: _isLoading ? null : _submitConsultation,
+                           style: ElevatedButton.styleFrom(backgroundColor: accentColor, foregroundColor: Colors.white),
+                           child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Submit Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                         ),
+                       ),
+                     ],
+                   ),
+                ],
               ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text('Reason for Consultation', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.titleMedium?.color)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _reasonController,
-            maxLines: 3,
-            decoration: const InputDecoration(hintText: 'E.g. Fever and body pain...'),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _submitConsultation,
-              style: ElevatedButton.styleFrom(backgroundColor: accentColor, foregroundColor: Colors.white),
-              child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Book Now', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -176,14 +197,14 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
     );
   }
 
-  Widget _patientInfoRow(String label, String value) {
+  Widget _patientInfoRow(ThemeData theme, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(fontSize: 13, color: theme.textTheme.bodySmall?.color)),
+          Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.displayLarge?.color)),
         ],
       ),
     );
@@ -193,17 +214,29 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
     return Center(
       child: Column(
         children: [
-          const SizedBox(height: 60),
-          Icon(Icons.check_circle, size: 80, color: AppColors.success),
-          const SizedBox(height: 20),
-          const Text('Request Submitted!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          Text('Consultation has been booked by ${widget.bookedBy}.', style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 40),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: accentColor, foregroundColor: Colors.white),
-            child: const Text('Return to Dashboard'),
+          const SizedBox(height: 80),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Icon(Icons.check_circle, size: 80, color: AppColors.success),
+          ),
+          const SizedBox(height: 32),
+          const Text('Consultation Booked!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Text(
+            'A request has been sent to available doctors for Dr. ${_patientData?['name']}. You can see this in patient records later.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.grey, fontSize: 13),
+          ),
+          const SizedBox(height: 48),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(backgroundColor: accentColor, foregroundColor: Colors.white),
+              child: const Text('Back to Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
           ),
         ],
       ),

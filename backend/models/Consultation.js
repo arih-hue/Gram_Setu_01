@@ -8,7 +8,7 @@ const ConsultationSchema = new mongoose.Schema({
     reason: { type: String, required: true },
     status: { 
         type: String, 
-        enum: ['pending', 'accepted', 'completed'], 
+        enum: ['pending', 'accepted', 'active', 'completed'], 
         default: 'pending' 
     },
     acceptedByDoctorId: { type: String, default: null },
@@ -18,6 +18,9 @@ const ConsultationSchema = new mongoose.Schema({
         enum: ['patient', 'asha', 'panchayat'], 
         required: true 
     },
+    startedAt: { type: Date, default: null },
+    completedAt: { type: Date, default: null },
+    durationMinutes: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now }
 });
 

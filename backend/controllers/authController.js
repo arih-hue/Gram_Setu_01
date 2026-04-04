@@ -66,7 +66,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create User
-    const user = await User.create({
+    const userData = {
       name,
       uid,
       mciNumber,
@@ -74,15 +74,19 @@ exports.register = async (req, res) => {
       panchayatId,
       phone,
       hospitalName,
-      location: location || `${village}, ${block}`,
-      village,
-      block,
+      location: {
+        village: village || '',
+        block: block || '',
+        fullLocation: location || `${village || ''}, ${block || ''}`.trim().replace(/^, |,$/, '')
+      },
       gender,
       age,
       emergencyContact,
       password: hashedPassword,
       role: role || 'patient'
-    });
+    };
+
+    const user = await User.create(userData);
 
     console.log('✨ New User Registered Details:', {
       id: user._id,
@@ -208,6 +212,16 @@ exports.updateProfile = async (req, res) => {
 
     // prevent password updates through this general profile update route without hashing
     delete updateFields.password;
+
+    // Handle structured location update if passed
+    if (updateFields.location && typeof updateFields.location === 'string') {
+        const parts = updateFields.location.split(',');
+        updateFields.location = {
+            village: parts[0]?.trim() || '',
+            block: parts[1]?.trim() || '',
+            fullLocation: updateFields.location
+        };
+    }
 
     const user = await User.findOneAndUpdate(identifierCondition, updateFields, { new: true });
     if (!user) {
