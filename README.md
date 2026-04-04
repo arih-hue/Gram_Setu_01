@@ -22,18 +22,17 @@ In rural India, accessing quality healthcare is difficult due to distance, lack 
 - Emergency access button
 - Complete **Node.js backend** structure (MongoDB ready)
 - Assets and images integrated
-
-### In Progress / Next
-- Jitsi Meet video calling for doctor-patient consultation
 - Language support (English ↔ Hindi)
 - Doctor & ASHA dashboards to view patient details
+- Video calling for doctor-patient consultation
+
 
 ## 🛠 Tech Stack
 
 - **Frontend**: Flutter (Dart) – Cross-platform (Android, iOS, Web)
-- **Backend**: Node.js + Express (MongoDB planned)
+- **Backend**: Node.js + Express (MongoDB)
 - **Video Calling**: Jitsi Meet SDK (planned)
-- **Translation**: LibreTranslate (planned)
+- **Translation**: LibreTranslate 
 
 ## 🚀 How to Run the Project
 
