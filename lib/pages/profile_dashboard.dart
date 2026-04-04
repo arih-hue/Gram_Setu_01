@@ -4,6 +4,7 @@ import '../core/app_colors.dart';
 import '../widgets/gram_app_bar.dart';
 import '../core/theme_provider.dart';
 import '../core/user_provider.dart';
+import '../services/auth_service.dart';
 
 class ProfileDashboard extends StatefulWidget {
   final String? roleOverride;
@@ -475,7 +476,8 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
           width: double.infinity,
           height: 56,
           child: OutlinedButton.icon(
-            onPressed: () {
+            onPressed: () async {
+              await AuthService.signOut();
               Provider.of<UserProvider>(context, listen: false).setUser({});
               Navigator.pushReplacementNamed(context, '/home');
             },
