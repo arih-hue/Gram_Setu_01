@@ -1,6 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const Medicine = require('../models/Medicine');
+const User = require('../models/User');
+
+// Browse medicines with pharmacist details
+router.get('/browse', async (req, res) => {
+  try {
+    const medicines = await Medicine.find().lean();
+    const result = await Promise.all(medicines.map(async (med) => {
+      // Find pharmacist by their pharmacistId string
+      const pharmacist = await User.findOne({ pharmacistId: med.pharmacistId, role: 'pharmacist' }).lean();
+      return {
+        ...med,
+        pharmacistName: pharmacist ? pharmacist.name : 'Unknown Pharmacy',
+        pharmacistPhone: pharmacist ? pharmacist.phone : ''
+      };
+    }));
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching medicines for browsing', error: error.message });
+  }
+});
 
 // Add a new medicine
 router.post('/add', async (req, res) => {

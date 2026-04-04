@@ -20,6 +20,20 @@ class MedicineService {
     }
   }
 
+  static Future<List<Map<String, dynamic>>> browseMedicinesWithDetails() async {
+    try {
+      final response = await http.get(Uri.parse('$_baseUrl/browse'));
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        return List<Map<String, dynamic>>.from(data);
+      }
+      return [];
+    } catch (e) {
+      print('Error browsing medicines: $e');
+      return [];
+    }
+  }
+
   static Future<List<Medicine>> searchMedicines(String name) async {
     try {
       final response = await http.get(Uri.parse('$_baseUrl/search/$name'));

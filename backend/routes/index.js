@@ -12,6 +12,7 @@ const doctorRoutes = require('./doctorRoutes');
 const statsRoutes = require('./statsRoutes');
 const medicineRoutes = require('./medicineRoutes');
 const vitalsRoutes = require('./vitalsRoutes');
+const medicineRequestRoutes = require('./medicineRequestRoutes');
 
 // Use Routes
 router.use('/auth', authRoutes);
@@ -25,6 +26,7 @@ router.use('/triage', triageRoutes);
 router.use('/stats', statsRoutes);
 router.use('/medicine', medicineRoutes);
 router.use('/vitals', vitalsRoutes);
+router.use('/medicine-request', medicineRequestRoutes);
 
 
 // Optional: Test Route

@@ -6,6 +6,9 @@ import '../core/models/medicine.dart';
 import '../services/medicine_service.dart';
 import '../widgets/gram_app_bar.dart';
 import '../widgets/translated_text.dart';
+import '../widgets/pharmacist/inventory_tab.dart';
+import '../widgets/pharmacist/requests_tab.dart';
+import '../widgets/pharmacist/pharmacist_profile_tab.dart';
 
 class PharmacistDashboard extends StatefulWidget {
   const PharmacistDashboard({super.key});
@@ -25,6 +28,12 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
   void initState() {
     super.initState();
     _fetchMedicines();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchMedicines() async {
@@ -61,6 +70,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.adaptiveSurface(context),
           title: TranslatedText(medicine == null ? 'Add Medicine' : 'Edit Medicine'),
           content: SingleChildScrollView(
             child: Column(
@@ -74,6 +84,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
                 const SizedBox(height: 10),
                 CheckboxListTile(
                   title: const TranslatedText('In Stock'),
+                  activeColor: AppColors.primaryTeal,
                   value: available,
                   onChanged: (val) => setDialogState(() => available = val ?? true),
                 ),
@@ -106,165 +117,15 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
                 }
 
                 if (success) {
-                  Navigator.pop(context);
+                  if (mounted) Navigator.pop(context);
                   _fetchMedicines();
                 }
               },
-              child: TranslatedText(medicine == null ? 'Add' : 'Update'),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryTeal),
+              child: TranslatedText(medicine == null ? 'Add' : 'Update', style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
-    final userName = user?['name'] ?? 'Pharmacist';
-
-    return Scaffold(
-      backgroundColor: AppColors.adaptiveBackground(context),
-      appBar: GramAppBar(
-        roleLabel: 'Pharmacist Dashboard',
-        onLogoutTap: () => Navigator.pushReplacementNamed(context, '/home'),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TranslatedText(
-                    'Hello, $userName 👋',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context)),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Search Bar
-                  TextField(
-                    controller: _searchController,
-                    onChanged: (val) {
-                      setState(() => _searchQuery = val);
-                      _searchMedicines(val);
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Search medicines...',
-                      prefixIcon: const Icon(Icons.search, color: AppColors.primaryTeal),
-                      suffixIcon: _searchQuery.isNotEmpty 
-                        ? IconButton(icon: const Icon(Icons.clear), onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                          _fetchMedicines();
-                        })
-                        : null,
-                      filled: true,
-                      fillColor: AppColors.adaptiveSurface(context),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _fetchMedicines,
-                child: _isLoading 
-                  ? const Center(child: CircularProgressIndicator())
-                  : _medicines.isEmpty
-                    ? const Center(child: TranslatedText('No medicines found.'))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: _medicines.length,
-                        itemBuilder: (context, index) {
-                          final med = _medicines[index];
-                          return _buildMedicineCard(med);
-                        },
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddMedicineDialog(),
-        backgroundColor: AppColors.primaryTeal,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
-        child: _buildBottomNavBar(),
-      ),
-    );
-  }
-
-  Widget _buildMedicineCard(Medicine med) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.adaptiveSurface(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.adaptiveBorder(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(med.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text('₹${med.price}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryTeal)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.business, size: 14, color: AppColors.adaptiveTextSecondary(context)),
-              const SizedBox(width: 4),
-              Text(med.manufacturer, style: TextStyle(fontSize: 12, color: AppColors.adaptiveTextSecondary(context))),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: med.availability ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: TranslatedText(
-                  med.availability ? 'In Stock' : 'Out of Stock',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: med.availability ? Colors.green : Colors.red),
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TranslatedText('Expires by:', style: TextStyle(fontSize: 10, color: AppColors.adaptiveTextSecondary(context))),
-                  Text(med.expiryDate, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: AppColors.primaryTeal, size: 20),
-                    onPressed: () => _showAddMedicineDialog(medicine: med),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                    onPressed: () => _confirmDelete(med),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -273,6 +134,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: AppColors.adaptiveSurface(context),
         title: const TranslatedText('Delete Medicine'),
         content: TranslatedText('Are you sure you want to delete ${med.name}?'),
         actions: [
@@ -281,7 +143,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
             onPressed: () async {
               final success = await MedicineService.deleteMedicine(med.id);
               if (success) {
-                Navigator.pop(context);
+                if (mounted) Navigator.pop(context);
                 _fetchMedicines();
               }
             },
@@ -292,60 +154,123 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     );
   }
 
-  Widget _buildBottomNavBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: AppColors.adaptiveSurface(context).withAlpha(229),
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: AppColors.adaptiveBorder(context)),
+  @override
+  Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context).user;
+    final userName = user?['name'] ?? 'Pharmacist';
+    final pharmacistId = user?['pharmacistId'] ?? 'unknown';
+
+    return Scaffold(
+      backgroundColor: AppColors.adaptiveBackground(context),
+      appBar: GramAppBar(
+        roleLabel: 'Pharmacist Portal',
+        showSos: false,
+        onLogoutTap: () {
+            Provider.of<UserProvider>(context, listen: false).clearUser();
+            Navigator.pushReplacementNamed(context, '/home');
+        },
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home, 'Home', 0),
-          _buildNavItem(Icons.person_outline, 'Profile', 1),
-          _buildNavItem(Icons.settings_outlined, 'Settings', 2),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            if (_currentIndex == 0)
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TranslatedText(
+                      'Hello, $userName 👋',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.adaptiveTextPrimary(context)),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    TextField(
+                      controller: _searchController,
+                      onChanged: (val) {
+                        setState(() => _searchQuery = val);
+                        _searchMedicines(val);
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Search inventory...',
+                        prefixIcon: const Icon(Icons.search, color: AppColors.primaryTeal),
+                        suffixIcon: _searchQuery.isNotEmpty 
+                          ? IconButton(icon: const Icon(Icons.clear), onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                            _fetchMedicines();
+                          })
+                          : null,
+                        filled: true,
+                        fillColor: AppColors.adaptiveSurface(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
+            Expanded(
+              child: IndexedStack(
+                index: _currentIndex,
+                children: [
+                  InventoryTab(
+                    medicines: _medicines,
+                    isLoading: _isLoading,
+                    onEdit: (med) => _showAddMedicineDialog(medicine: med),
+                    onDelete: _confirmDelete,
+                    onRefresh: _fetchMedicines,
+                  ),
+                  RequestsTab(pharmacistId: pharmacistId),
+                  PharmacistProfileTab(userData: user ?? {}),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: _currentIndex == 0 
+        ? FloatingActionButton(
+            onPressed: () => _showAddMedicineDialog(),
+            backgroundColor: AppColors.primaryTeal,
+            child: const Icon(Icons.add, color: Colors.white),
+          )
+        : null,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
+        child: _buildBottomNavBar(),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () async {
-        if (index == 0) {
-          setState(() => _currentIndex = index);
-          return;
-        }
-
-        if (index == 1) {
-          await Navigator.pushNamed(context, '/profile', arguments: 'pharmacist');
-        } else if (index == 2) {
-          await Navigator.pushNamed(context, '/settings');
-        }
-
-        if (mounted) {
-          setState(() => _currentIndex = 0);
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: isSelected
-            ? BoxDecoration(
-                color: AppColors.primaryTeal.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(30),
-              )
-            : null,
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? AppColors.primaryTeal : AppColors.adaptiveTextSecondary(context), size: 24),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              TranslatedText(label, style: const TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.bold, fontSize: 13)),
-            ],
+  Widget _buildBottomNavBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.adaptiveSurface(context),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedItemColor: AppColors.primaryTeal,
+          unselectedItemColor: AppColors.adaptiveTextSecondary(context).withOpacity(0.5),
+          showSelectedLabels: true,
+          showUnselectedLabels: false,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2), label: 'Inventory'),
+            BottomNavigationBarItem(icon: Icon(Icons.message_outlined), activeIcon: Icon(Icons.message), label: 'Requests'),
+            BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
       ),

@@ -168,6 +168,14 @@ class _PatientDashboardState extends State<PatientDashboard> {
                   ),
                 ),
                 ActionCard(
+                  title: 'Request Medicines',
+                  subtitle: 'Order from village pharmacist',
+                  icon: Icons.local_pharmacy_outlined,
+                  isDark: true,
+                  accentColor: AppColors.primaryTeal,
+                  onTap: () => Navigator.pushNamed(context, '/request_medicine'),
+                ),
+                ActionCard(
                   title: 'Heart Rate Scan (rPPG)',
                   subtitle: 'Measure vitals using phone camera',
                   icon: Icons.favorite_border,

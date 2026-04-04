@@ -141,7 +141,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _userData?['uid'] != null ||
         _userData?['mciNumber'] != null ||
         _userData?['ashaId'] != null ||
-        _userData?['panchayatId'] != null;
+        _userData?['panchayatId'] != null ||
+        _userData?['pharmacistId'] != null;
 
     if (!hasIdentifier) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User ID is missing, cannot update')));
