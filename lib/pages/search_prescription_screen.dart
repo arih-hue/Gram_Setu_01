@@ -23,7 +23,7 @@ class _SearchPrescriptionScreenState extends State<SearchPrescriptionScreen> {
     
     try {
       // Find if patient exists first
-      final response = await ApiService.get('/user/patient/$uid');
+      final response = await ApiService.get('/patient/uid/$uid');
       if (response.statusCode == 200) {
         if (mounted) {
           // If found, open the same PrescriptionViewer used by patients

@@ -69,7 +69,7 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
                 icon: Icons.person_add_outlined,
                 isDark: true,
                 accentColor: AppColors.softBlue,
-                onTap: () => Navigator.pushNamed(context, '/new_patient_registration'),
+                onTap: () => Navigator.pushNamed(context, '/patient_registration', arguments: {'asWorker': true}),
               ),
               ActionCard(
                 title: 'View Prescriptions',
@@ -79,14 +79,7 @@ class _AshaWorkerDashboardState extends State<AshaWorkerDashboard> {
                 accentColor: AppColors.panchayatPurple,
                 onTap: () => Navigator.pushNamed(context, '/view_prescription_search'),
               ),
-              ActionCard(
-                title: 'Record Vitals',
-                subtitle: 'Track BP, Sugar, and SpO2 for members',
-                icon: Icons.monitor_heart_outlined,
-                isDark: true,
-                accentColor: Colors.pinkAccent,
-                onTap: () => Navigator.pushNamed(context, '/vitals_recorder'),
-              ),
+
               
               const SizedBox(height: 80),
             ],

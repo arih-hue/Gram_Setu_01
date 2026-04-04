@@ -73,6 +73,9 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
   bool _isLoading = false;
 
   Future<void> _handleRegister() async {
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final asWorker = args?['asWorker'] ?? false;
+
     final name = _nameController.text.trim();
     final aadhar = _aadharController.text.trim();
     final contact = _contactController.text.trim();
@@ -85,9 +88,9 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
 
     if (name.isEmpty ||
         aadhar.length != 12 ||
-        contact.isEmpty ||
+        (!asWorker && contact.isEmpty) ||
         location.isEmpty ||
-        emergencyContact.isEmpty ||
+        (!asWorker && emergencyContact.isEmpty) ||
         age.isEmpty ||
         password.isEmpty ||
         password != confirmPassword ||
@@ -109,18 +112,19 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
       final userData = await AuthService.registerPatient(
         name: name,
         uid: newUid,
-        phone: contact,
+        phone: contact.isEmpty ? "N/A" : contact,
         village: _village.isNotEmpty ? _village : location.split(',')[0].trim(),
         block: _block.isNotEmpty ? _block : (location.contains(',') ? location.split(',')[1].trim() : ''),
         fullLocation: location,
         gender: gender,
         age: age,
-        emergencyContact: emergencyContact,
+        emergencyContact: emergencyContact.isEmpty ? "N/A" : emergencyContact,
         password: password,
+        asWorker: asWorker,
       );
 
       if (mounted) {
-        if (userData != null) {
+        if (!asWorker && userData != null) {
           Provider.of<UserProvider>(context, listen: false).setUser(userData);
         }
         // Show dialog with generated UID instead of just redirecting silently
@@ -135,7 +139,11 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
                TextButton(
                  onPressed: () {
                    Navigator.of(context).pop();
-                   Navigator.pushReplacementNamed(context, '/patient', arguments: userData);
+                   if (asWorker) {
+                     Navigator.of(context).pop(); // Go back to ASHA dashboard
+                   } else {
+                     Navigator.pushReplacementNamed(context, '/patient', arguments: userData);
+                   }
                  },
                  child: const Text('OK', style: TextStyle(color: AppColors.patientBlue, fontSize: 16)),
                )
@@ -226,7 +234,7 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
             const SizedBox(height: 4),
 
             // Contact Field
-            _buildLabel(theme, 'Contact Number'),
+            _buildLabel(theme, ModalRoute.of(context)?.settings.arguments is Map && (ModalRoute.of(context)?.settings.arguments as Map)['asWorker'] == true ? 'Contact Number (Optional)' : 'Contact Number'),
             _buildTextField(
               controller: _contactController,
               hintText: '10-digit Mobile Number',
@@ -238,7 +246,7 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
             const SizedBox(height: 20),
 
             // Emergency Contact Field
-            _buildLabel(theme, 'Emergency Contact Name & Number'),
+            _buildLabel(theme, ModalRoute.of(context)?.settings.arguments is Map && (ModalRoute.of(context)?.settings.arguments as Map)['asWorker'] == true ? 'Emergency Contact Name & Number (Optional)' : 'Emergency Contact Name & Number'),
             _buildTextField(
               controller: _emergencyContactController,
               hintText: 'e.g., John Doe 9876543210',

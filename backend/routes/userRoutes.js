@@ -59,6 +59,7 @@ router.get('/uid/:uid', async (req, res) => {
 
         res.status(200).json({ 
             success: true, 
+            user: user,
             personalDetails: {
                 name: user.name,
                 age: user.age || 'N/A',

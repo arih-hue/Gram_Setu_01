@@ -8,7 +8,7 @@ class AppConstants {
   /// ✅ Android Emulator (running on same PC) → use "http://10.0.2.2:3000"
   /// ✅ Flutter Web (browser on same PC)     → use "http://localhost:3000"
   /// ✅ Physical Phone (same Wi-Fi)          → use your Laptop's Local IP (e.g., http://192.168.1.15:3000)
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'http://192.168.52.31:3000';
 
 
   // ── Timeouts ───────────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ class PatientDashboard extends StatefulWidget {
 class _PatientDashboardState extends State<PatientDashboard> {
   int _currentIndex = 0;
   int _consultationCount = 0;
+  int _prescriptionCount = 0;
   bool _isLoading = true;
 
   @override
@@ -35,9 +36,11 @@ class _PatientDashboardState extends State<PatientDashboard> {
     setState(() => _isLoading = true);
     try {
       final uid = user['uid'];
-      final consResponse = await ApiService.get('/consultation/count/$uid');
-      if (consResponse.statusCode == 200) {
-        _consultationCount = jsonDecode(consResponse.body)['count'];
+      final response = await ApiService.get('/users/uid/$uid');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _consultationCount = (data['consultations'] as List?)?.length ?? 0;
+        _prescriptionCount = (data['prescriptions'] as List?)?.length ?? 0;
       }
     } catch (e) {
       print('Dashboard Data Error: $e');
@@ -110,8 +113,8 @@ class _PatientDashboardState extends State<PatientDashboard> {
                   children: [
                     Expanded(
                       child: StatCard(
-                        title: 'Active Rx',
-                        value: '0 Units',
+                        title: 'Prescriptions',
+                        value: '$_prescriptionCount Rx',
                         icon: Icons.medication_outlined,
                         bgColor: Colors.teal,
                         textColor: Colors.white,

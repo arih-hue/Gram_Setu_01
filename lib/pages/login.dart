@@ -43,8 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  String get _dashboardRoute {
-    switch (_role) {
+  String _routeForRole(String role) {
+    switch (role) {
       case 'doctor':
         return '/doctor';
       case 'asha':
@@ -93,10 +93,16 @@ class _LoginScreenState extends State<LoginScreen> {
       final userData = await AuthService.loginWithPassword(
         identifier: identifier,
         password: password,
+        role: _role,
       );
       if (mounted && userData != null) {
+        final returnedRole = userData['role'] as String? ?? '';
+        // Double-check: client-side role guard
+        if (returnedRole != _role) {
+          throw Exception('This ID belongs to a $returnedRole account. Please use the correct login portal.');
+        }
         Provider.of<UserProvider>(context, listen: false).setUser(userData);
-        Navigator.pushReplacementNamed(context, _dashboardRoute, arguments: userData);
+        Navigator.pushReplacementNamed(context, _routeForRole(returnedRole), arguments: userData);
       }
     } catch (e) {
       if (mounted) {
@@ -325,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Center(
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, _dashboardRoute);
+                    Navigator.pushReplacementNamed(context, _routeForRole(_role));
                   },
                   child: Text(
                     'Skip Login (Demo Mode)',

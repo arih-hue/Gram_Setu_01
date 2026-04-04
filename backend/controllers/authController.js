@@ -117,7 +117,7 @@ exports.register = async (req, res) => {
 // Login via Custom Credentials (Flexible Identifier: UID, Phone, or MCI ID + Password)
 exports.login = async (req, res) => {
   try {
-    const { identifier, password } = req.body;
+    const { identifier, password, role } = req.body;
 
     if (!identifier || !password) {
       return res.status(400).json({ success: false, message: 'Please provide an Identifier and Password.' });
@@ -137,6 +137,12 @@ exports.login = async (req, res) => {
     if (!user || !user.password) {
       console.warn(`❌ Login Failed (User Not Found): ${identifier}`);
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+    }
+
+    // ✅ Role validation — reject if the user's role doesn't match the login portal
+    if (role && user.role !== role) {
+      console.warn(`❌ Role Mismatch: tried to login as '${role}' but account is '${user.role}' — identifier: ${identifier}`);
+      return res.status(403).json({ success: false, message: `This ID belongs to a ${user.role} account. Please use the correct login portal.` });
     }
 
     // Check Password

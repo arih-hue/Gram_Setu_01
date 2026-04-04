@@ -403,6 +403,77 @@ class _ProfileDashboardState extends State<ProfileDashboard> {
         SizedBox(
           width: double.infinity,
           height: 56,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pushNamed(context, '/edit_profile', 
+                arguments: Provider.of<UserProvider>(context, listen: false).user);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryTeal,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            icon: const Icon(Icons.edit),
+            label: const Text(
+              'Edit Profile',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: OutlinedButton.icon(
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Delete Account'),
+                  content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                try {
+                  final userData = Provider.of<UserProvider>(context, listen: false).user;
+                  if (userData != null) {
+                    await AuthService.deleteProfile({
+                      'id': userData['_id'],
+                      'uid': userData['uid'],
+                      'role': userData['role'] ?? role,
+                    });
+                  }
+                  Provider.of<UserProvider>(context, listen: false).setUser({});
+                  Navigator.pushReplacementNamed(context, '/home');
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                }
+              }
+            },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.redAccent),
+              foregroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text(
+              'Delete Account',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          height: 56,
           child: OutlinedButton.icon(
             onPressed: () {
               Provider.of<UserProvider>(context, listen: false).setUser({});

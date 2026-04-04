@@ -136,14 +136,32 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
                 ),
                 if (!_isLoading) ...[
                   const SizedBox(height: 12),
-                  StatCard(
-                    title: 'Health Personnel', 
-                    value: '${_stats['totalDoctors']} Doctors, ${_stats['totalAshaWorkers']} ASHAs', 
-                    icon: Icons.local_hospital_outlined, 
-                    bgColor: AppColors.softBlue, 
-                    textColor: Colors.white, 
-                    iconColor: Colors.white, 
-                    iconBgColor: Colors.white.withOpacity(0.2)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: StatCard(
+                          title: 'Doctors',
+                          value: '${_stats['totalDoctors']}',
+                          icon: Icons.local_hospital_outlined,
+                          bgColor: AppColors.doctorGreen,
+                          textColor: Colors.white,
+                          iconColor: Colors.white,
+                          iconBgColor: Colors.white.withOpacity(0.2),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: StatCard(
+                          title: 'ASHAs',
+                          value: '${_stats['totalAshaWorkers']}',
+                          icon: Icons.volunteer_activism_outlined,
+                          bgColor: AppColors.panchayatPurple,
+                          textColor: Colors.white,
+                          iconColor: Colors.white,
+                          iconBgColor: Colors.white.withOpacity(0.2),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
                 const SizedBox(height: 32),
