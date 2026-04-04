@@ -272,7 +272,7 @@ class _NewPanchayatRegistrationScreenState extends State<NewPanchayatRegistratio
               color: theme.textTheme.titleMedium?.color,
             ),
           ),
-          if (trailing != null) trailing,
+          ?trailing,
         ],
       ),
     );

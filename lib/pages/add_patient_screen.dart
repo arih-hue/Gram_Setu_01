@@ -47,7 +47,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          const SnackBar(content: Text('Patient not found')),
         );
       }
     } finally {
@@ -62,6 +62,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     await Future.delayed(const Duration(seconds: 2));
 
     final uid = 'UID${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
       _isSubmitted = true;
@@ -343,7 +344,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
             color: theme.textTheme.titleMedium?.color,
           ),
         ),
-        if (trailing != null) trailing,
+        ?trailing,
       ],
     );
   }

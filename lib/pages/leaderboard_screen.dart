@@ -38,7 +38,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         }
       }
     } catch (e) {
-      print('Leaderboard Fetch Error: $e');
+      // Handle fetch error
+    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -140,10 +141,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget _buildLeaderboardTile(ThemeData theme, int rank, String name, dynamic hours, bool isMe) {
     final isTop3 = rank <= 3;
     final Color rankColor;
-    if (rank == 1) rankColor = const Color(0xFFFFD700); // Gold
-    else if (rank == 2) rankColor = const Color(0xFFC0C0C0); // Silver
-    else if (rank == 3) rankColor = const Color(0xFFCD7F32); // Bronze
-    else rankColor = theme.dividerColor;
+    if (rank == 1) {
+      rankColor = const Color(0xFFFFD700); // Gold
+    } else if (rank == 2) {
+      rankColor = const Color(0xFFC0C0C0); // Silver
+    } else if (rank == 3) {
+      rankColor = const Color(0xFFCD7F32); // Bronze
+    } else {
+      rankColor = theme.dividerColor;
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

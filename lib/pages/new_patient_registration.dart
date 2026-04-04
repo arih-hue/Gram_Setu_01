@@ -374,7 +374,7 @@ class _NewPatientRegistrationScreenState extends State<NewPatientRegistrationScr
               color: theme.textTheme.titleMedium?.color,
             ),
           ),
-          if (trailing != null) trailing,
+          ?trailing,
         ],
       ),
     );

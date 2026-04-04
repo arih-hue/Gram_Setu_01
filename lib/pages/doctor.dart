@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:gram_setu/pages/video_call_page.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
@@ -21,7 +20,7 @@ class DoctorDashboard extends StatefulWidget {
 class _DoctorDashboardState extends State<DoctorDashboard> {
   int _currentIndex = 0;
   
-  Map<String, dynamic> _stats = {
+  final Map<String, dynamic> _stats = {
     'patientsSeen': '0',
     'hoursGiven': '0.0',
     'thisWeekHours': '0.0'
@@ -63,7 +62,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
         }
       }
     } catch (e) {
-      print('Doctor Stats Error: $e');
+      // Error handling
     } finally {
       if (mounted) setState(() {});
     }
@@ -272,48 +271,4 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
       ),
     );
   }
-
-  Widget _buildScheduleItem(String time, String patientName, String description, String status, Color statusColor) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(time, style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 12)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(patientName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.textTheme.titleMedium?.color)),
-                Text(description, style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12)),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
-    );
-  }
 }
-

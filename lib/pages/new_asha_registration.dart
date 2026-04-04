@@ -267,7 +267,7 @@ class _NewAshaRegistrationScreenState extends State<NewAshaRegistrationScreen> {
               color: theme.textTheme.titleMedium?.color,
             ),
           ),
-          if (trailing != null) trailing,
+          ?trailing,
         ],
       ),
     );

@@ -10,7 +10,6 @@ class AuthService {
   static const _storage = FlutterSecureStorage();
 
   static String get _baseUrl => AppConstants.baseUrl;
-  static String get _googleAuthUrl => '$_baseUrl/api/auth/google';
 
   static Exception _handleError(Object e) {
     if (e is TimeoutException) {
@@ -260,7 +259,9 @@ class AuthService {
       final parts = token.split('.');
       if (parts.length != 3) return null;
       var payloadStr = parts[1];
-      while (payloadStr.length % 4 != 0) payloadStr += '=';
+      while (payloadStr.length % 4 != 0) {
+        payloadStr += '=';
+      }
       final payloadMap = jsonDecode(utf8.decode(base64Url.decode(payloadStr)));
       return payloadMap['role'];
     } catch (e) {

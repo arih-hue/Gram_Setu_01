@@ -409,7 +409,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               color: theme.textTheme.titleMedium?.color,
             ),
           ),
-          if (trailing != null) trailing,
+          ?trailing,
         ],
       ),
     );

@@ -53,11 +53,15 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
           _patientFound = false;
           _patientData = null;
         });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Patient not found')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Patient not found')));
+        }
 
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error lookup: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error lookup: $e')));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -88,7 +92,9 @@ class _AshaConsultationScreenState extends State<AshaConsultationScreen> {
         throw Exception('Failed to book consultation');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error booking: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error booking: $e')));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

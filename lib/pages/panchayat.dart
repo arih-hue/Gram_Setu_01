@@ -36,8 +36,8 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
     final user = Provider.of<UserProvider>(context, listen: false).user;
     if (user == null) return;
     
-    final village = user?['village'] ?? '';
-    final block = user?['block'] ?? '';
+    final village = user['village'] ?? '';
+    final block = user['block'] ?? '';
     
     try {
       final res = await ApiService.get('/stats/village?village=$village&block=$block');
@@ -51,7 +51,6 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
         }
       }
     } catch (e) {
-      print('Village Stats Error: $e');
       if (mounted) setState(() => _statsLoading = false);
     }
   }
@@ -59,7 +58,6 @@ class _PanchayatDashboardState extends State<PanchayatDashboard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final user = Provider.of<UserProvider>(context).user;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
