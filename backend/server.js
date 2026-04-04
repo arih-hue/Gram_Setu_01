@@ -11,19 +11,9 @@ const app = express();
 connectDB();
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
-// Allow all origins during development (Flutter Web runs on localhost:*).
-// For production, replace '*' with your actual domain(s):
-//   origin: ['https://your-app.com', 'http://10.0.1.45:8080']
-const corsOptions = {
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false,           // must be false when origin is '*'
-};
-app.use(cors(corsOptions));
-// Ensure pre-flight OPTIONS requests are answered for all routes.
-// '/{*any}' is the Express v5 / path-to-regexp v8 compatible wildcard.
-app.options('/{*any}', cors(corsOptions));
+// Allow all origins, methods, and headers for development
+app.use(cors());
+app.options('*', cors());
 
 app.use(express.json());
 
